@@ -2,83 +2,68 @@
 
 
 
-int main(const int argc, char* const* argv)
-{
+int main(const int argc, char* const* argv){
 
     stack_t* stack_p = NULL;
     createAndInitStack(&stack_p, DEFAULT_STACK_SIZE);
 
-    char* out_file_name_p = NULL;
+    char* in_file_name_p = NULL;
 
-    processCMDArguments(argc, argv, &out_file_name_p);
+    processCMDArguments(argc, argv, &in_file_name_p);
 
-    int descr = open(out_file_name_p, _O_BINARY);
+    int descr = open(in_file_name_p, _O_BINARY);
 
     struct stat file_stats = {};
     fstat(descr, &file_stats);
 
-    char* code = (char*) calloc(file_stats.st_size, sizeof(char));
-
-    read(descr, code, file_stats.st_size); //Там \r и \n!!
-
-    //printf("Len: %lu\n", file_stats.st_size);
-
-    //write(descr, command, 1000);
-    //printf("%s", code);
+    processor_t processor = {};
+    processor.stack_p = stack_p;
+    processor.byte_code = (unsigned char*) calloc(file_stats.st_size, sizeof(unsigned char));
+    read(descr, processor.byte_code, file_stats.st_size);
+    processor.IP = 0;
 
     unsigned char command = 255;
-    elem_type argument = NAN;
 
-    size_t next_str_idx = 0;
 
-    for(int i = 0; i < file_stats.st_size; i++)
-    {
-        while(code[i] != '\n' && i < file_stats.st_size - 1)
-        {
-            i++;
-        }
+    while(processor.IP < file_stats.st_size){
 
-        code[i] = '\0';
+        command = processor.byte_code[processor.IP++];
 
-        sscanf(code + next_str_idx, "%hhu %lg", &command, &argument);
-
-        printf("From idx = <%llu>, next_str_idx, ", next_str_idx);
-        next_str_idx = i + 1;
-
-        printf("Detected command: <%hhu> with argument <%lg>\n", command, argument);
+        printf("Detected command: <%hhu>\n", command - '0');
 
         switch (command){
 
-            case add:
+            case PUSH:
 
-                stackPush(stack_p, a);
+                push(&processor);
                 break;
 
-            case sub:
+            case ADD:
 
-                sub(stack_p);
+                add(&processor);
                 break;
 
-            case out:
+            case SUB:
 
-                out(stack_p);
+                sub(&processor);
                 break;
 
-            case end:
+            case OUT:
 
-                end(stack_p);
+                out(&processor);
+                break;
+
+            case HLT:
+
+                hlt(&processor);
                 break;
 
             default:
 
-                printf(RED "INCORRECT COMMAND" DEFAULT);
-                end(stack_p);
+                printf(RED "INCORRECT COMMAND IN %ld BYTE" DEFAULT, processor.IP);
+                hlt(&processor);
                 break;
         }
-
-        //Убрать потом
-        argument = NAN;
-        command  = 255;
     }
 
 }
@@ -111,48 +96,63 @@ void processCMDArguments(const int argc, char* const * argv, char** const name_f
 
 }
 
-void sub(stack_t* stack_p){
+void push(processor_t* processor_p){
 
-    assert(stack_p);
+    assert(processor_p);
+
+    elem_type elem = *((elem_type*) (processor_p->byte_code + processor_p->IP));
+
+    stackPush(processor_p->stack_p, elem);
+
+    processor_p->IP += sizeof(elem_type);
+}
+
+void sub(processor_t* processor_p){
+
+    assert(processor_p);
 
     elem_type a = NAN;
     elem_type b = NAN;
 
-    stackPop(stack_p, &b);
-    stackPop(stack_p, &a);
+    stackPop(processor_p->stack_p, &b);
+    stackPop(processor_p->stack_p, &a);
 
-    stackPush(stack_p, a - b);
+    stackPush(processor_p->stack_p, a - b);
 }
 
-void add(stack_t* stack_p){
+void add(processor_t* processor_p){
 
-    assert(stack_p);
+    assert(processor_p);
 
     elem_type a = NAN;
     elem_type b = NAN;
 
-    stackPop(stack_p, &b);
-    stackPop(stack_p, &a);
+    stackPop(processor_p->stack_p, &b);
+    stackPop(processor_p->stack_p, &a);
 
-    stackPush(stack_p, a + b);
+    stackPush(processor_p->stack_p, a + b);
 }
 
-void out(stack_t* stack_p){
+void out(processor_t* processor_p){
 
-    assert(stack_p);
+    assert(processor_p);
 
     elem_type a = NAN;
 
-    stackPop(stack_p, &a);
+    stackPop(processor_p->stack_p, &a);
 
-    printf("%lg", a);
+    printf("OUT: %lg\n", a);
 }
 
-void end(stack_t* stack_p){
+void hlt(processor_t* processor_p){
 
-    assert(stack_p);
+    assert(processor_p);
 
-    stackDelete(stack_p);
+    stackDelete(processor_p->stack_p);
+
+    free(processor_p->byte_code);
+
+    printf("HLT\n");
 
     exit(errno);
 }
