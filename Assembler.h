@@ -29,6 +29,6 @@ struct assembler_t{
 
 void startAssembler(assembler_t* assembler_p, const int argc, char* const* argv);
 void processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
-void processTheCommand(assembler_t* assembler_p, const char* const command, const double argument);
+void processNextCommand(assembler_t* assembler_p);
 
 #endif

@@ -24,6 +24,11 @@ struct processor_t{
     unsigned char*    byte_code;
     long unsigned int i_p;
     long unsigned int len_of_byte_code;
+
+    elem_type         r_a;
+    elem_type         r_b;
+    elem_type         r_c;
+    elem_type         r_d;
 };
 
 void startProcessor(processor_t* processor_p, const int argc, char* const* argv);
@@ -34,13 +39,18 @@ void processCMDArguments(const int argc, char* const * argv, char** const name_f
 
 void safeStackPop(processor_t* processor_p, elem_type* elem_p);
 
-void push(processor_t* processor_p);
-void sub (processor_t* processor_p);
-void add (processor_t* processor_p);
-void mul(processor_t* processor_p);
-void div(processor_t* processor_p);
-void out (processor_t* processor_p);
-void hlt (processor_t* processor_p);
-void sqrt(processor_t* processor_p);
+void push (processor_t* processor_p);
+void pushR(processor_t* processor_p);
+void popR (processor_t* processor_p);
+void out  (processor_t* processor_p);
+void hlt  (processor_t* processor_p);
+
+void add  (processor_t* processor_p);
+void sub  (processor_t* processor_p);
+void mul  (processor_t* processor_p);
+void div  (processor_t* processor_p);
+void sqrt (processor_t* processor_p);
+
+
 
 #endif
