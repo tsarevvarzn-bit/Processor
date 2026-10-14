@@ -217,7 +217,7 @@ void processNextCommand(assembler_t* assembler_p){
 
             assembler_p->byte_code[assembler_p->byte_code_idx++] = SQRT;
 
-        }else{
+        }else if(! (command[0] == '\0' || (command[0] == '/' && command[1] == '/'))){
 
             printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu\n" DEFAULT, assembler_p->num_of_command, assembler_p->next_str_idx);
             exit(0);
