@@ -15,8 +15,8 @@
 #define VIOLET  "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-const unsigned int MAX_COMMAND_LEN    = 100;
-
+const unsigned int MAX_COMMAND_LEN = 100;
+const size_t       MIN_STACK_SIZE  = 10;
 
 enum code_errors{
 

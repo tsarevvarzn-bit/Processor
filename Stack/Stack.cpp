@@ -161,7 +161,7 @@ code_errors     stackPop(stack_t* const stack_p, elem_type* const last_elem_p){
 
         ON_HASH(recalculateHashes(stack_p);)
 
-        if(stack_p->size * 4 <= stack_p->capacity && stack_p->capacity != 1 && (error_code = stackResizeDown(stack_p)) != correct){
+        if(stack_p->size * 4 <= stack_p->capacity && stack_p->capacity / 2 >= MIN_STACK_SIZE && (error_code = stackResizeDown(stack_p)) != correct){
 
             return error_code;
         }
