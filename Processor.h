@@ -46,6 +46,7 @@ void popR (processor_t* processor_p);
 void jump (processor_t* processor_p);
 void call (processor_t* processor_p);
 void ret  (processor_t* processor_p);
+void in   (processor_t* processor_p);
 void out  (processor_t* processor_p);
 void hlt  (processor_t* processor_p);
 
@@ -66,6 +67,7 @@ const function_t COMMANDS_FUNCTIONS[] = {
     jump,
     call,
     ret,
+    in,
     out,
     hlt,
 
@@ -76,9 +78,22 @@ const function_t COMMANDS_FUNCTIONS[] = {
     sqrt
 };
 
-#endif
 //
 // #ifdef FLAG1
 // ....
 // #endif
 //TODO -D_FLAG1
+#ifdef PROC_DUMP
+
+    #define ON_PROC_DUMP(...) __VA_ARGS__
+
+#else
+
+    #define ON_PROC_DUMP(...)
+
+#endif
+
+
+#endif
+//endif #ifndef PROCESSOR_H
+

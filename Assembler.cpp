@@ -126,6 +126,10 @@ void processNextCommand(assembler_t* assembler_p){
 
             assembler_p->byte_code[assembler_p->byte_code_idx++] = RET;
 
+        }else if(strcmp(command, "IN") == 0){
+
+            assembler_p->byte_code[assembler_p->byte_code_idx++] = IN;
+
         }else if(strcmp(command, "OUT") == 0){
 
             assembler_p->byte_code[assembler_p->byte_code_idx++] = OUT;

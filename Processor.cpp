@@ -12,9 +12,9 @@ int main(const int argc, char* const* argv){
 
     while(processor.i_p < processor.len_of_byte_code){
 
-        command = processor.byte_code[processor.i_p++] & 0b00011111;
+        command = processor.byte_code[processor.i_p++] & 0b0001'1111;
 
-        //printf("Start doing command: <%X>\n", command);
+        ON_PROC_DUMP(printf("Start doing command: <%X>\n", command);)
 
         if(command < PUSH || command > SQRT){
 
@@ -24,8 +24,8 @@ int main(const int argc, char* const* argv){
 
         (COMMANDS_FUNCTIONS[command - 1])(&processor);
 
-        //printf("Done command: <%X>\n", command);
-        //procDump(&processor);
+        ON_PROC_DUMP(printf("Done command: <%X>\n", command);)
+        ON_PROC_DUMP(procDump(&processor);)
         //Более гибкая система, пауза после каждой: d - dump, иначе - не дамп
     }
 }
@@ -72,7 +72,7 @@ void push(processor_t* processor_p){
 
     assert(processor_p);
 
-    unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b11100000;
+    unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b1110'0000;
     elem_type elem = POISON;
 
     switch(argument){
@@ -142,7 +142,7 @@ void jump(processor_t* processor_p){
 
     assert(processor_p);
 
-    unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b11100000;
+    unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b1110'0000;
 
     size_t jump_index = *((size_t*) (processor_p->byte_code + processor_p->i_p));
     processor_p->i_p += sizeof(size_t);
@@ -209,22 +209,14 @@ void call(processor_t* processor_p){
 
     assert(processor_p);
 
-    //printf("1\n");
-
     size_t ret_idx = processor_p->i_p + sizeof(size_t);
 
     elem_type ret_i_p_double = *((elem_type*)(&ret_idx));
 
-    //printf("2\n");
-
     stackPush(processor_p->returns_stack, ret_i_p_double);
-    //printf("LABUBA in: %lg, %llu\n", ret_i_p_double, *((size_t*) (&ret_i_p_double)));
-
-    //printf("3, proc ip: %llu\n", processor_p->i_p);
 
     processor_p->i_p = *((size_t*) (processor_p->byte_code + processor_p->i_p));
 
-    //printf("4\n");
 }
 
 void ret(processor_t* processor_p){
@@ -235,13 +227,21 @@ void ret(processor_t* processor_p){
 
     safeStackPop(processor_p->returns_stack, &ret_i_p_double);
 
-    //printf("LABUBA out: %lg\n", ret_i_p_double);
-
-    //printf("Old stack_ip: %llu\n", processor_p->i_p);
-
     processor_p->i_p = *((size_t*) (&ret_i_p_double));
 
-    //printf("New stack_ip: %llu\n", processor_p->i_p);
+}
+
+void in(processor_t* processor_p){
+
+    assert(processor_p);
+
+    elem_type new_elem = NAN;
+
+    printf(YELLOW "Please, enter number:\n" DEFAULT);
+
+    scanf("%lg", &new_elem);
+
+    stackPush(processor_p->computing_stack, new_elem);
 }
 
 void out(processor_t* processor_p){
