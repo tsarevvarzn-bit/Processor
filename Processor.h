@@ -15,9 +15,10 @@
 #include <sys/stat.h>
 #include <math.h>
 
-const size_t       DEFAULT_STACK_SIZE = 8 ;
-const unsigned int MAX_FILE_NAME      = 100;
-const double       EPSILON            = 0.0001;
+const size_t DEFAULT_STACK_SIZE = 8     ;
+const int    MAX_FILE_NAME      = 100   ;
+const double EPSILON            = 0.0001;
+
 
 struct processor_t{
 
@@ -33,32 +34,42 @@ struct processor_t{
     elem_type         r_d;
 };
 
-void       startProcessor     (processor_t* processor_p, const int argc, char* const* argv);
-void       processCMDArguments(const int argc, char* const * argv, char** const name_from_p);
+enum return_codes{
 
-void       procDump           (processor_t* processor_p);
+    CONTINUE = 0,
+    END      = 1,
+};
 
-void       safeStackPop       (stack_t*  stack_p, elem_type* elem_p);
-elem_type* getRegisterPointer (processor_t* processor_p, unsigned char register_code);
+void         startProcessor     (processor_t* processor_p, const int argc, char* const* argv);
+void         procDump           (processor_t* processor_p);
+elem_type*   getRegisterPointer (processor_t* processor_p, unsigned char register_code);
+void         endOfWorking       (processor_t* processor_p);
 
-void push (processor_t* processor_p);
-void popR (processor_t* processor_p);
-void jump (processor_t* processor_p);
-void call (processor_t* processor_p);
-void ret  (processor_t* processor_p);
-void in   (processor_t* processor_p);
-void out  (processor_t* processor_p);
-void hlt  (processor_t* processor_p);
+void         processCMDArguments(const int argc,    char* const * argv, char** const name_from_p);
+return_codes safeStackPop       (stack_t*  stack_p, elem_type*    elem_p);
+bool         isZero             (elem_type number);
 
-void add  (processor_t* processor_p);
-void sub  (processor_t* processor_p);
-void mul  (processor_t* processor_p);
-void div  (processor_t* processor_p);
-void sqrt (processor_t* processor_p);
+bool         isJumping          (const unsigned char argument,
+                                 const elem_type     left_elem,
+                                 const elem_type     right_elem,
+                                 return_codes* const return_code_p);
 
-bool isZero(elem_type number);
+return_codes popR (processor_t* processor_p);
+return_codes push (processor_t* processor_p);
+return_codes jump (processor_t* processor_p);
+return_codes call (processor_t* processor_p);
+return_codes ret  (processor_t* processor_p);
+return_codes in   (processor_t* processor_p);
+return_codes out  (processor_t* processor_p);
+return_codes hlt  (processor_t* processor_p);
 
-typedef void (*function_t)(processor_t* processor_p);
+return_codes add  (processor_t* processor_p);
+return_codes sub  (processor_t* processor_p);
+return_codes mul  (processor_t* processor_p);
+return_codes div  (processor_t* processor_p);
+return_codes sqrt (processor_t* processor_p);
+
+typedef return_codes (*function_t)(processor_t* processor_p);
 
 const function_t COMMANDS_FUNCTIONS[] = {
 
@@ -78,22 +89,26 @@ const function_t COMMANDS_FUNCTIONS[] = {
     sqrt
 };
 
-//
-// #ifdef FLAG1
-// ....
-// #endif
-//TODO -D_FLAG1
-#ifdef PROC_DUMP
+#ifdef COMMANDS_DUMP
 
-    #define ON_PROC_DUMP(...) __VA_ARGS__
+    #define ON_COMMANDS_DUMP(...) __VA_ARGS__
 
 #else
 
-    #define ON_PROC_DUMP(...)
+    #define ON_COMMANDS_DUMP(...)
+
+#endif
+
+#ifdef PROC_STRUCT_DUMP
+
+    #define ON_PROC_STRUCT_DUMP(...) __VA_ARGS__
+
+#else
+
+    #define ON_PROC_STRUCT_DUMP(...)
 
 #endif
 
 
-#endif
-//endif #ifndef PROCESSOR_H
 
+#endif //endif #ifndef PROCESSOR_H

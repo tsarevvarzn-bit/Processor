@@ -6,28 +6,25 @@ int main(const int argc, char* const* argv){
 
     processor_t processor = {};
     startProcessor(&processor, argc, argv);
-    putchar('\n');
 
-    unsigned char command = 255;
+    unsigned char command = 0;
 
     while(processor.i_p < processor.len_of_byte_code){
 
         command = processor.byte_code[processor.i_p++] & 0b0001'1111;
 
-        ON_PROC_DUMP(printf("Start doing command: <%X>\n", command);)
+        ON_COMMANDS_DUMP(printf("Start doing command: <%X>\n", command);)
 
-        if(command < PUSH || command > SQRT){
+        return_codes return_code = (COMMANDS_FUNCTIONS[command - PUSH])(&processor);
 
-            printf(RED "INCORRECT COMMAND IN %llu BYTE\n" DEFAULT, processor.i_p);
-            hlt(&processor);
-        }
+        ON_COMMANDS_DUMP(printf("Done command: <%X>\n", command);)
+        ON_PROC_STRUCT_DUMP(procDump(&processor);)
 
-        (COMMANDS_FUNCTIONS[command - 1])(&processor);
-
-        ON_PROC_DUMP(printf("Done command: <%X>\n", command);)
-        ON_PROC_DUMP(procDump(&processor);)
-        //Более гибкая система, пауза после каждой: d - dump, иначе - не дамп
+        if(return_code == END)
+            break;
     }
+
+    endOfWorking(&processor);
 }
 
 void startProcessor(processor_t* processor_p, const int argc, char* const* argv){
@@ -62,13 +59,14 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
     processor_p->r_c = POISON;
     processor_p->r_d = POISON;
 
-    printf("Len of byte code: %llu", processor_p->len_of_byte_code);
+    ON_COMMANDS_DUMP(printf("Len of byte code: %llu", processor_p->len_of_byte_code);)
 
     close(descr);
+    putchar('\n');
 }
 
 
-void push(processor_t* processor_p){
+return_codes push(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -80,7 +78,7 @@ void push(processor_t* processor_p){
         case PUSH_ARG_IMMED_CONST:
 
             elem = *((elem_type*) (processor_p->byte_code + processor_p->i_p));
-            //printf("Imm const\n");
+            ON_COMMANDS_DUMP(printf("Imm const\n");)
             processor_p->i_p += sizeof(elem_type);
             break;
 
@@ -97,16 +95,16 @@ void push(processor_t* processor_p){
             }else{
 
                 printf(RED "ERROR: incorrect argument of PUSHr, code of register: <%hhu>" DEFAULT, register_code);
-                hlt(processor_p);
+                return END;
             }
 
             if(IS_POISON(elem)){
 
                 printf(RED "ERROR: NAN value of register, code of register: <%hhu>\n" DEFAULT, register_code);
-                hlt(processor_p);
+                return END;
             }
 
-            //printf("Reg const\n");
+            ON_COMMANDS_DUMP(printf("Reg const\n");)
 
             break;
             }
@@ -114,13 +112,15 @@ void push(processor_t* processor_p){
         default:
 
             printf(RED "ERROR: incorrect argument of PUSH in left 3 bits, push argument: <%X>" DEFAULT, argument);
-            hlt(processor_p);
+            return END;
     }
 
     stackPush(processor_p->computing_stack, elem);
+
+    return CONTINUE;
 }
 
-void popR(processor_t* processor_p){
+return_codes popR(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -129,16 +129,23 @@ void popR(processor_t* processor_p){
 
     if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
 
-        safeStackPop(processor_p->computing_stack, register_p);
-        return;
+        stackPop(processor_p->computing_stack, register_p);
+
+        if(IS_POISON(*register_p)){
+
+            return END;
+        }
+
+        return CONTINUE;
     }
 
     printf(RED "ERROR: incorrect argument of POPr, code of register: <%hhu>" DEFAULT, register_code);
-    hlt(processor_p);
+
+    return END;
 }
 
 
-void jump(processor_t* processor_p){
+return_codes jump(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -147,65 +154,98 @@ void jump(processor_t* processor_p){
     size_t jump_index = *((size_t*) (processor_p->byte_code + processor_p->i_p));
     processor_p->i_p += sizeof(size_t);
 
+    bool         isJump      = true    ;
+    return_codes return_code = CONTINUE;
+
+    printf("Argument: %X\n", argument);
+
     if(argument != JUMP_ARG_ABS){
+
+        printf("POPs for jump\n");
 
         elem_type left_elem  = NAN;
         elem_type right_elem = NAN;
 
-        safeStackPop(processor_p->computing_stack, &right_elem);
-        safeStackPop(processor_p->computing_stack, &left_elem);
+        stackPop(processor_p->computing_stack, &right_elem);
+        stackPop(processor_p->computing_stack, &left_elem );
 
-        switch(argument){//Функция разбора аргумента
+        if(IS_POISON(left_elem) || IS_POISON(right_elem)){
 
-            case JUMP_ARG_A:
-
-                if(! (left_elem > right_elem))
-                    return;
-                break;
-
-            case JUMP_ARG_AE:
-
-                if(! (left_elem >= right_elem))
-                    return;
-                break;
-
-            case JUMP_ARG_B:
-
-                if(! (left_elem < right_elem))
-                    return;
-                break;
-
-            case JUMP_ARG_BE:
-
-                if(! (left_elem <= right_elem))
-                    return;
-                break;
-
-            case JUMP_ARG_E:
-
-                if(! isZero(left_elem - right_elem))
-                    return;
-                break;
-
-            case JUMP_ARG_NE:
-
-                if(!! isZero(left_elem - right_elem))
-                    return;
-                break;
-
-            default:
-
-                printf(RED "ERROR: incorrect argument of JUMP in left 3 bits, jump argument: <%X>" DEFAULT, argument);
-                hlt(processor_p);
-
+            return END;
         }
+
+        isJump = isJumping(argument, left_elem, right_elem, &return_code);
+
     }
 
-    //printf("Doing jump\n");
-    processor_p->i_p = jump_index;
+    if(isJump){
+
+        processor_p->i_p = jump_index;
+        ON_COMMANDS_DUMP(printf("Jump done on idx: " GREEN "%llu\n" DEFAULT , jump_index);)
+    }
+
+    return return_code;
 }
 
-void call(processor_t* processor_p){
+bool isJumping(const unsigned char argument,
+               const elem_type     left_elem,
+               const elem_type     right_elem,
+               return_codes* const return_code_p){
+
+    assert(argument);
+    assert(return_code_p);
+
+    *return_code_p = CONTINUE;
+
+    switch(argument){//Функция разбора аргумента
+
+        case JUMP_ARG_A:
+
+            if(! (left_elem > right_elem))
+                return false;
+            break;
+
+        case JUMP_ARG_AE:
+
+            if(! (left_elem >= right_elem))
+                return false;
+            break;
+
+        case JUMP_ARG_B:
+
+            if(! (left_elem < right_elem))
+                return false;
+            break;
+
+        case JUMP_ARG_BE:
+
+            if(! (left_elem <= right_elem))
+                return false;
+            break;
+
+        case JUMP_ARG_E:
+
+            if(! isZero(left_elem - right_elem))
+                return false;
+            break;
+
+        case JUMP_ARG_NE:
+
+            if(!! isZero(left_elem - right_elem))
+                return false;
+            break;
+
+        default:
+
+            printf(RED "ERROR: incorrect argument of JUMP in left 3 bits, jump argument: <%X>" DEFAULT, argument);
+            *return_code_p = END;
+            return false;
+    }
+
+    return true;
+}
+
+return_codes call(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -217,21 +257,28 @@ void call(processor_t* processor_p){
 
     processor_p->i_p = *((size_t*) (processor_p->byte_code + processor_p->i_p));
 
+    return CONTINUE;
 }
 
-void ret(processor_t* processor_p){
+return_codes ret(processor_t* processor_p){
 
     assert(processor_p);
 
     elem_type ret_i_p_double = POISON;
 
-    safeStackPop(processor_p->returns_stack, &ret_i_p_double);
+    stackPop(processor_p->returns_stack, &ret_i_p_double);
+
+    if(IS_POISON(ret_i_p_double)){
+
+        return END;
+    }
 
     processor_p->i_p = *((size_t*) (&ret_i_p_double));
 
+    return CONTINUE;
 }
 
-void in(processor_t* processor_p){
+return_codes in(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -242,20 +289,83 @@ void in(processor_t* processor_p){
     scanf("%lg", &new_elem);
 
     stackPush(processor_p->computing_stack, new_elem);
+
+    return CONTINUE;
 }
 
-void out(processor_t* processor_p){
+return_codes out(processor_t* processor_p){
 
     assert(processor_p);
 
     elem_type a = NAN;
 
-    safeStackPop(processor_p->computing_stack, &a);
+    stackPop(processor_p->computing_stack, &a);
+
+    if(IS_POISON(a)){
+
+        return END;
+    }
 
     printf(GREEN BOLD "OUT: %lg\n" DEFAULT, a);
+
+    return CONTINUE;
 }
 
-void hlt(processor_t* processor_p){
+return_codes hlt(processor_t* processor_p){
+
+    assert(processor_p);
+
+    return END;
+}
+
+#define BINARY_ARITHMETIC_OPERATION(func_name, operation)   \
+                                                            \
+return_codes func_name(processor_t* processor_p){           \
+                                                            \
+    assert(processor_p);                                    \
+                                                            \
+    elem_type a = NAN;                                      \
+    elem_type b = NAN;                                      \
+                                                            \
+    stackPop(processor_p->computing_stack, &b);             \
+    stackPop(processor_p->computing_stack, &a);             \
+                                                            \
+    if(IS_POISON(a) || IS_POISON(b)){                       \
+                                                            \
+        return END;                                         \
+    }                                                       \
+                                                            \
+    stackPush(processor_p->computing_stack, a operation b); \
+                                                            \
+    return CONTINUE;                                        \
+}
+
+BINARY_ARITHMETIC_OPERATION(add, +)
+BINARY_ARITHMETIC_OPERATION(sub, -)
+BINARY_ARITHMETIC_OPERATION(mul, *)
+BINARY_ARITHMETIC_OPERATION(div, /)
+
+#undef BINARY_ARITHMETIC_OPERATION
+
+return_codes sqrt(processor_t* processor_p){
+
+    assert(processor_p);
+
+    elem_type a = NAN;
+
+    stackPop(processor_p->computing_stack, &a);
+
+    if(IS_POISON(a)){
+
+        return END;
+    }
+
+    stackPush(processor_p->computing_stack, pow(a, 0.5));
+
+    return CONTINUE;
+}
+
+void endOfWorking(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -264,71 +374,6 @@ void hlt(processor_t* processor_p){
     free(processor_p->byte_code);
 
     printf("HLT\n");
-
-    exit(errno);
-}
-
-void sub(processor_t* processor_p){//Отдельная функция для всех бинарных функций
-
-    assert(processor_p);
-
-    elem_type a = NAN;
-    elem_type b = NAN;
-
-    safeStackPop(processor_p->computing_stack, &b);
-    safeStackPop(processor_p->computing_stack, &a);
-
-    stackPush(processor_p->computing_stack, a - b);
-}
-
-void add(processor_t* processor_p){
-
-    assert(processor_p);
-
-    elem_type a = NAN;
-    elem_type b = NAN;
-
-    safeStackPop(processor_p->computing_stack, &b);
-    safeStackPop(processor_p->computing_stack, &a);
-
-    stackPush(processor_p->computing_stack, a + b);
-}
-
-void mul(processor_t* processor_p){
-
-    assert(processor_p);
-
-    elem_type a = NAN;
-    elem_type b = NAN;
-
-    safeStackPop(processor_p->computing_stack, &b);
-    safeStackPop(processor_p->computing_stack, &a);
-
-    stackPush(processor_p->computing_stack, a * b);
-}
-
-void div(processor_t* processor_p){
-
-    assert(processor_p);
-
-    elem_type a = NAN;
-    elem_type b = NAN;
-
-    safeStackPop(processor_p->computing_stack, &b);
-    safeStackPop(processor_p->computing_stack, &a);
-
-    stackPush(processor_p->computing_stack, a / b);
-}
-
-void sqrt(processor_t* processor_p){
-
-    assert(processor_p);
-
-    elem_type a = NAN;
-
-    safeStackPop(processor_p->computing_stack, &a);
-
-    stackPush(processor_p->computing_stack, pow(a, 0.5));
 }
 
 void procDump(processor_t* processor_p){
@@ -375,7 +420,7 @@ void procDump(processor_t* processor_p){
     printf(DEFAULT "\nWe are in idx = %llu", processor_p->i_p);
 
     printf("\n\n" DEFAULT);
-    printf(VIOLET "\n---------------------------------------END_OF_DUMP--------------------------------\n\n" DEFAULT);
+    printf(VIOLET "\n---------------------------------------END_OF_DUMP------------------------------------\n\n" DEFAULT);
 }
 
 void processCMDArguments(const int argc, char* const * argv, char** const name_from_p){
@@ -431,19 +476,6 @@ double* getRegisterPointer(processor_t* processor_p, unsigned char register_code
         default:
 
             return NULL;
-    }
-}
-
-void safeStackPop(stack_t* stack_p, elem_type* elem_p){
-
-    assert(stack_p);
-    assert(elem_p);
-
-    stackPop(stack_p, elem_p);
-
-    if(IS_POISON(*elem_p)){
-
-        exit(errno);//!!!!!!!!!!!!
     }
 }
 

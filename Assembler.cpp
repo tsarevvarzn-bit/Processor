@@ -98,77 +98,64 @@ void processNextCommand(assembler_t* assembler_p){
 
         checkAndResizeUpByteCode(assembler_p);
 
-        char command[MAX_COMMAND_LEN]  = "";
+        char command[MAX_COMMAND_LEN]  = ""   ;
+        bool isStrProcessed            = false;
 
         sscanf(assembler_p->asm_code + assembler_p->next_str_idx, "%s", command);
 
-        printf("From next_str_idx = <%llu>, detected command: <%s>\n", assembler_p->next_str_idx, command);
+        printf("From str: %llu, asm code idx: %llu detected command: <%s>\n",
+               assembler_p->num_of_command, assembler_p->next_str_idx, command);
 
-        //TODO цикл strncmp шек на массиве структур имя + номер + количество аргументов(JUMP и PUSH)
+        for(size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++){
 
-        if(strcmp(command, "PUSH") == 0){
+            if(strncmp(commands[i].name, command, MAX_COMMAND_LEN) == 0){
 
-            processPush(assembler_p);
+                if(commands[i].function != NULL){
 
-        }else if(strcmp(command, "POP") == 0){
+                    commands[i].function(assembler_p);
 
-            processPop(assembler_p);
+                }else{
 
-        }else if(command[0] == 'J'){
+                    assert(commands[i].code != ZERO);
+                    assembler_p->byte_code[assembler_p->byte_code_idx++] = commands[i].code;
 
-            processJumps(assembler_p, command);
+                }
 
-        }else if(strcmp(command, "CALL") == 0){
+                isStrProcessed = true;
 
-            processCall(assembler_p);
-
-        }else if(strcmp(command, "RET") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = RET;
-
-        }else if(strcmp(command, "IN") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = IN;
-
-        }else if(strcmp(command, "OUT") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = OUT;
-
-        }else if(strcmp(command, "HLT") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = HLT;
-
-        }else if(strcmp(command, "ADD") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = ADD;
-
-        }else if(strcmp(command, "SUB") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = SUB;
-
-        }else if(strcmp(command, "MUL") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = MUL;
-
-        }else if(strcmp(command, "DIV") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = DIV;
-
-        }else if(strcmp(command, "SQRT") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = SQRT;
-
-        }else if(command[0] == ':'){
-
-            processMark(assembler_p);
-
-        }else if(! (command[0] == '\0' || (command[0] == '/' && command[1] == '/'))){
-
-            printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu\n" DEFAULT,
-            assembler_p->num_of_command, assembler_p->next_str_idx);
-            exit(0);
+                break;
+            }
         }
+
+        printf("isStrProcessed: %d, command: <%s>\n", isStrProcessed, command);
+        if(!isStrProcessed && !isNotCommandStrCorrect(assembler_p, command)){
+
+            printf(RED "Syntax error on %llu str\n" DEFAULT, assembler_p->num_of_command);
+            exit(errno);
+        }
+
         asmDump(assembler_p);
+}
+
+bool isNotCommandStrCorrect(assembler_t* assembler_p, const char* const command){
+
+    assert(assembler_p);
+    assert(command);
+
+    if(command[0] == '\0')
+        return true;
+
+    if(command[0] == '/' && command[1] == '/')
+        return true;
+
+    if(command[0] == ':'){
+
+        processMark(assembler_p);
+        return true;
+
+    }
+
+    return false;
 }
 
 void processPush(assembler_t* assembler_p){
@@ -190,28 +177,7 @@ void processPush(assembler_t* assembler_p){
         command = command | PUSH_ARG_REG;
         assembler_p->byte_code[assembler_p->byte_code_idx++] = command;
 
-        if(      strcmp(str_argument, "AX") == 0){//Декодирование в отдельную функцию
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = AX;
-
-        }else if(strcmp(str_argument, "BX") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = BX;
-
-        }else if(strcmp(str_argument, "CX") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = CX;
-
-        }else if(strcmp(str_argument, "DX") == 0){
-
-            assembler_p->byte_code[assembler_p->byte_code_idx++] = DX;
-
-        }else{
-
-            printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, PUSHr have <%s> - incorrect argument\n" DEFAULT,
-            assembler_p->num_of_command, assembler_p->next_str_idx, str_argument);
-            exit(0);
-        }
+        processRegister(assembler_p, str_argument);
 
     }else{
 
@@ -252,84 +218,59 @@ void processPop(assembler_t* assembler_p){
 
     assembler_p->byte_code[assembler_p->byte_code_idx++] = POPr;
 
-    if(      strcmp(str_argument, "AX") == 0){
+    processRegister(assembler_p, str_argument);
+}
+
+void processRegister(assembler_t* assembler_p, const char* const name_of_reg){
+
+    assert(assembler_p);
+    assert(name_of_reg);
+
+    if(      strcmp(name_of_reg, "AX") == 0){
 
         assembler_p->byte_code[assembler_p->byte_code_idx++] = AX;
 
-    }else if(strcmp(str_argument, "BX") == 0){
+    }else if(strcmp(name_of_reg, "BX") == 0){
 
         assembler_p->byte_code[assembler_p->byte_code_idx++] = BX;
 
-    }else if(strcmp(str_argument, "CX") == 0){
+    }else if(strcmp(name_of_reg, "CX") == 0){
 
         assembler_p->byte_code[assembler_p->byte_code_idx++] = CX;
 
-    }else if(strcmp(str_argument, "DX") == 0){
+    }else if(strcmp(name_of_reg, "DX") == 0){
 
         assembler_p->byte_code[assembler_p->byte_code_idx++] = DX;
 
     }else{
 
         printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, POPr have <%s> - incorrect argument\n" DEFAULT,
-        assembler_p->num_of_command, assembler_p->next_str_idx, str_argument);
+        assembler_p->num_of_command, assembler_p->next_str_idx, name_of_reg);
         exit(0);
     }
 }
 
-void processJumps(assembler_t* assembler_p, const char* const command_name){
-
-    assert(assembler_p);
-    assert(command_name);
-
-    unsigned char len_of_command = 0;
-    unsigned char command        = JUMP;
-
-    if      (strcmp(command_name, "JUMP" ) == 0){//TODO цикл по массиву комманд
-
-        command = command | JUMP_ARG_ABS;
-        len_of_command = 4;
-
-    }else if(strcmp(command_name, "JA") == 0){
-
-        command = command | JUMP_ARG_A;
-        len_of_command = 2;
-
-    }else if(strcmp(command_name, "JAE") == 0){
-
-        command = command | JUMP_ARG_AE;
-        len_of_command = 3;
-
-    }else if(strcmp(command_name, "JB" ) == 0){
-
-        command = command | JUMP_ARG_B;
-        len_of_command = 2;
-
-    }else if(strcmp(command_name, "JBE") == 0){
-
-        command = command | JUMP_ARG_BE;
-        len_of_command = 3;
-
-    }else if(strcmp(command_name, "JE" ) == 0){
-
-        command = command | JUMP_ARG_E;
-        len_of_command = 2;
-
-    }else if(strcmp(command_name, "JNE") == 0){
-
-        command = command | JUMP_ARG_NE;
-        len_of_command = 3;
-
-    }else{
-
-        printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, J.. incorrect version: <%s>\n" DEFAULT,
-        assembler_p->num_of_command, assembler_p->next_str_idx, command_name);
-        exit(0);//!!!!!!!
-    }
-
-    assembler_p->byte_code[assembler_p->byte_code_idx++] = command;
-
-    decryptMark(assembler_p, assembler_p->next_str_idx + len_of_command);
+#define CONDITIONAL_JUMP(func_name, code, len_of_command)                   \
+                                                                            \
+void func_name(assembler_t* assembler_p){                                   \
+                                                                            \
+    assert(assembler_p);                                                    \
+                                                                            \
+    unsigned char command = JUMP;                                           \
+    assembler_p->byte_code[assembler_p->byte_code_idx++] = command | code;  \
+                                                                            \
+    decryptMark(assembler_p, assembler_p->next_str_idx + len_of_command);   \
 }
+
+CONDITIONAL_JUMP(processJump, JUMP_ARG_ABS, 4)
+CONDITIONAL_JUMP(processJA,   JUMP_ARG_A,   2)
+CONDITIONAL_JUMP(processJAE,  JUMP_ARG_AE,  3)
+CONDITIONAL_JUMP(processJB,   JUMP_ARG_B,   2)
+CONDITIONAL_JUMP(processJBE,  JUMP_ARG_BE,  3)
+CONDITIONAL_JUMP(processJE,   JUMP_ARG_E,   2)
+CONDITIONAL_JUMP(processJNE,  JUMP_ARG_NE,  3)
+
+#undef CONDITIONAL_JUMP
 
 void processCall(assembler_t* assembler_p){
 
@@ -493,5 +434,14 @@ void processCMDArguments(const int argc, char* const * argv, char** const name_f
     }
 
 }
+/*
+. . . . . . # . .
+. . . # # # # # #
+. . # # . . . . .
 
+4161.1346
+1346.4134
 
+* * # * #
+# # # # #
+*/
