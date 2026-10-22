@@ -59,7 +59,7 @@ struct command_t{
 };
 
 void processCMDArguments     (const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
-void startAssembler          (assembler_t* assembler_p, const int argc, char* const* argv);
+bool startAssembler          (assembler_t* assembler_p, const int argc, char* const* argv);
 void assembleTheCode         (assembler_t* assembler_p);
 void processNextCommand      (assembler_t* assembler_p);
 void checkAndResizeUpByteCode(assembler_t* assembler_p);

@@ -1,0 +1,71 @@
+IN
+POP AX
+
+CALL :calcFibonacci
+PUSH BX
+OUT
+HLT
+
+//Число, от которого нужно посчитать - в AX, результат - в BX
+//После себя функция в стеке ничего не оставляет, AX не меняет
+: calcFibonacci
+
+    //CALL :FibonacciDump
+
+    //Проверяем тривиальный случай
+
+    PUSH AX
+    PUSH 1
+    JNE :else1
+
+        PUSH 1
+        POP BX
+        RET
+
+    :else1
+
+        PUSH AX
+        PUSH 2
+        JNE :else2
+
+            PUSH 1
+            POP BX
+            RET
+
+        :else2
+
+            //Считаем сложные случаи, не 1 и не 2
+
+            PUSH AX
+            PUSH AX
+            PUSH AX
+            PUSH 1
+            SUB
+            POP AX
+            //HLT
+            //AX = n-1, stack: n, n
+            PUSH 2
+            SUB
+            //AX = n-1, stack: n-2, n
+
+            CALL :calcFibonacci
+            //BX = f(n-1)
+
+            POP AX
+            //AX = n-2, stack: n
+            PUSH BX
+            //AX = n-2, stack: f(n-1), n
+
+            CALL :calcFibonacci
+            //BX = f(n-2)
+
+            PUSH BX
+            //AX = n-2, stack: f(n-2), f(n-1), n
+
+            ADD
+            POP BX
+            POP AX
+            //Восстановили AX, стек не тронут, поменялось только BX
+
+            RET
+

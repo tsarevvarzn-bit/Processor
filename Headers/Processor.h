@@ -1,7 +1,7 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
-#include "Stack/Stack.cpp"
+#include "..\Stack\Stack.cpp"
 #include "Commands.h"
 //TODO safe!!!
 

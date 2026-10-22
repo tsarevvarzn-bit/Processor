@@ -1,4 +1,4 @@
-#include "Assembler.h"
+#include "..\Headers\Assembler.h"
 
 
 
@@ -6,7 +6,9 @@ int main(const int argc, char* const* argv){
 
     //TODO logger file with txt byte code
     assembler_t assembler = {};
-    startAssembler(&assembler, argc, argv);
+
+    if(startAssembler(&assembler, argc, argv) == false)
+        return errno;
 
     for(; assembler.num_of_completed_assemblies < 2; assembler.num_of_completed_assemblies++){
 
@@ -16,7 +18,7 @@ int main(const int argc, char* const* argv){
     write(assembler.descr_out, assembler.byte_code, (unsigned int) assembler.byte_code_idx);
 }
 
-void startAssembler(assembler_t* assembler_p, const int argc, char* const* argv){
+bool startAssembler(assembler_t* assembler_p, const int argc, char* const* argv){
 
     assert(assembler_p);
     assert(argv);
@@ -28,6 +30,12 @@ void startAssembler(assembler_t* assembler_p, const int argc, char* const* argv)
 
     int descr_in           = open(in_file_name_p,  _O_BINARY | _O_RDONLY);
     assembler_p->descr_out = open(out_file_name_p, _O_BINARY | _O_WRONLY | _O_CREAT | _O_TRUNC);
+
+    if(descr_in == EOF){
+
+        printf(RED "ERROR: there is no input file with name: <%s>\n", in_file_name_p);
+        return false;
+    }
 
     struct stat file_stats = {};
     fstat(descr_in, &file_stats);
@@ -47,6 +55,8 @@ void startAssembler(assembler_t* assembler_p, const int argc, char* const* argv)
     assembler_p->num_of_command = 1;
 
     assembler_p->num_of_marks   = 0;
+
+    return true;
 }
 
 

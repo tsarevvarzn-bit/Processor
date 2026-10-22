@@ -1,0 +1,110 @@
+//Задаем коэффициенты
+IN
+POP AX
+IN
+POP BX
+IN
+POP CX
+
+//Разбиваем на два основных случая
+PUSH AX
+PUSH 0
+JE :linear_case
+JUMP :quadratic_case
+
+//Линейное уравнение
+:linear_case
+    PUSH BX
+    PUSH 0
+    JNE :one_linear_root
+    PUSH CX
+    PUSH 0
+    JE :inf_roots
+    JUMP :no_roots
+
+:one_linear_root
+    PUSH 1
+    OUT
+    PUSH -1
+    PUSH CX
+    MUL
+    PUSH BX
+    DIV
+    OUT
+    HLT
+
+//Квадратное уравнение
+:quadratic_case
+    //Считаем дискриминант
+    PUSH BX
+    PUSH BX
+    MUL
+    PUSH -4
+    PUSH AX
+    MUL
+    PUSH CX
+    MUL
+    ADD
+    POP DX
+
+    PUSH DX
+    PUSH 0
+    JNE :d_is_not_a_zero
+
+    //Дискриминант нулевой
+    PUSH 1
+    OUT
+    PUSH -1
+    PUSH BX
+    MUL
+    PUSH 2
+    PUSH AX
+    MUL
+    DIV
+    OUT
+    HLT
+
+:d_is_not_a_zero
+    PUSH DX
+    PUSH 0
+    JB :no_roots
+    //Дискриминант положительный
+    PUSH 2
+    OUT
+    //Считаем первый корень
+    PUSH -1
+    PUSH BX
+    MUL
+    PUSH -1
+    PUSH DX
+    SQRT
+    MUL
+    ADD
+    PUSH 2
+    PUSH AX
+    MUL
+    DIV
+    OUT
+    //Считаем второй корень
+    PUSH -1
+    PUSH BX
+    MUL
+    PUSH DX
+    SQRT
+    ADD
+    PUSH 2
+    PUSH AX
+    MUL
+    DIV
+    OUT
+    HLT
+
+:no_roots
+    PUSH 0
+    OUT
+    HLT
+
+:inf_roots
+    PUSH 3
+    OUT
+    HLT

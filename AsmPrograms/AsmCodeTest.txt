@@ -1,0 +1,14 @@
+PUSH 0
+
+:mark1
+
+//PUSH 1
+//ADD
+//POP AX
+//PUSH AX
+//PUSH AX
+//PUSH AX
+//OUT
+//PUSH 5
+
+JNE :mark1

@@ -1,0 +1,67 @@
+:beginning
+PUSH 1
+POP AX
+//Проанализировали единичкой
+
+:cycle_beginning
+    PUSH AX
+    PUSH AX
+    MUL
+    OUT
+    //Вывели квадрат AX
+    PUSH AX
+    PUSH 1
+    ADD
+    POP AX
+    //Увеличили AX на 1
+    PUSH 10
+    PUSH AX
+    JAE :cycle_beginning
+
+JUMP :PASHALKO
+
+:end
+HLT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:PASHALKO
+PUSH 1258.24
+PUSH 24
+DIV
+OUT
+JUMP :end
+

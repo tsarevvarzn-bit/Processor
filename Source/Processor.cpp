@@ -1,4 +1,4 @@
-#include "Processor.h"
+#include "..\Headers\Processor.h"
 
 
 
@@ -157,11 +157,8 @@ return_codes jump(processor_t* processor_p){
     bool         isJump      = true    ;
     return_codes return_code = CONTINUE;
 
-    printf("Argument: %X\n", argument);
-
     if(argument != JUMP_ARG_ABS){
 
-        printf("POPs for jump\n");
 
         elem_type left_elem  = NAN;
         elem_type right_elem = NAN;
