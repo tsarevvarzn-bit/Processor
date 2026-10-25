@@ -12,8 +12,9 @@
 
 int main(){
 
-    unsigned char x = 0xB;
-    x = x | 0b10010000;
+    double x = 500;
 
-    printf("%X", x);
+    size_t y = (size_t) x;
+
+    printf("%llu", y);
 }

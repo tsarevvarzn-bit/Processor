@@ -59,6 +59,11 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
     processor_p->r_c = POISON;
     processor_p->r_d = POISON;
 
+    for(size_t i = 0; i < RAM_SIZE + VRAM_SIZE; i++){
+
+        processor_p->RAM[i] = 0;
+    }
+
     ON_COMMANDS_DUMP(printf("Len of byte code: %llu", processor_p->len_of_byte_code);)
 
     close(descr);
@@ -66,82 +71,117 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
 }
 
 
-return_codes push(processor_t* processor_p){
+return_codes push(processor_t* processor_p){//Доверяем пользователю, все делаем на даблах. При необходимости обращения к ячейке памяти по значению регистра или константы просто отбрасываем дробную часть
+
+    assert(processor_p);
+
+    unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b1110'0000;
+
+    double res = 0;
+
+    if(argument & PUSH_ARG_REG){
+
+        unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
+        elem_type* register_p = NULL;
+
+        if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
+
+            res += *register_p;
+
+        }else{
+
+            printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
+            return END;
+        }
+
+        if(IS_POISON(res)){
+
+            printf(RED "ERROR: NAN value of register, code of register: <%hhu>\n" DEFAULT, register_code);
+            return END;
+        }
+
+    }
+
+    if(argument & PUSH_ARG_IMMED_CONST){
+
+        res += *((elem_type*) (processor_p->byte_code + processor_p->i_p));
+        processor_p->i_p += sizeof(elem_type);
+    }
+
+    if(argument & PUSH_ARG_RAM){
+
+        res = processor_p->RAM[(size_t) res];
+    }
+
+    stackPush(processor_p->computing_stack, res);
+
+    return CONTINUE;
+}
+
+return_codes pop(processor_t* processor_p){
 
     assert(processor_p);
 
     unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b1110'0000;
     elem_type elem = POISON;
+    stackPop(processor_p->computing_stack, &elem);
 
-    switch(argument){
+    if(IS_POISON(elem)){
 
-        case PUSH_ARG_IMMED_CONST:
+        return END;
+    }
 
-            elem = *((elem_type*) (processor_p->byte_code + processor_p->i_p));
-            ON_COMMANDS_DUMP(printf("Imm const\n");)
-            processor_p->i_p += sizeof(elem_type);
-            break;
+    if(argument & POP_ARG_RAM){
 
-        case PUSH_ARG_REG:
+        double res = 0;
 
-            {
+        if(argument & PUSH_ARG_REG){
+
+            //TODO new func
             unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
             elem_type* register_p = NULL;
 
             if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
 
-                elem = *register_p;
+                res += *register_p;
 
             }else{
 
-                printf(RED "ERROR: incorrect argument of PUSHr, code of register: <%hhu>" DEFAULT, register_code);
+                printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
                 return END;
             }
+        }
 
-            if(IS_POISON(elem)){
+        if(argument & PUSH_ARG_IMMED_CONST){
 
-                printf(RED "ERROR: NAN value of register, code of register: <%hhu>\n" DEFAULT, register_code);
-                return END;
-            }
+            res += *((elem_type*) (processor_p->byte_code + processor_p->i_p));
+            processor_p->i_p += sizeof(elem_type);
+        }
 
-            ON_COMMANDS_DUMP(printf("Reg const\n");)
+        processor_p->RAM[(size_t) res] = elem;
 
-            break;
-            }
+    }else if(argument & POP_ARG_REG){
 
-        default:
+        unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
+        elem_type* register_p = NULL;
 
-            printf(RED "ERROR: incorrect argument of PUSH in left 3 bits, push argument: <%X>" DEFAULT, argument);
-            return END;
-    }
+        if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
 
-    stackPush(processor_p->computing_stack, elem);
+            *register_p = elem;
 
-    return CONTINUE;
-}
+        }else{
 
-return_codes popR(processor_t* processor_p){
-
-    assert(processor_p);
-
-    unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
-    elem_type* register_p = NULL;
-
-    if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
-
-        stackPop(processor_p->computing_stack, register_p);
-
-        if(IS_POISON(*register_p)){
-
+            printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
             return END;
         }
 
-        return CONTINUE;
+    }else{
+
+        printf(RED "ERROR: incorrect argument of pop, left 3 bits: %X\n" DEFAULT, argument);
+        return END;
     }
 
-    printf(RED "ERROR: incorrect argument of POPr, code of register: <%hhu>" DEFAULT, register_code);
-
-    return END;
+    return CONTINUE;
 }
 
 
@@ -194,7 +234,7 @@ bool isJumping(const unsigned char argument,
 
     *return_code_p = CONTINUE;
 
-    switch(argument){//Функция разбора аргумента
+    switch(argument){
 
         case JUMP_ARG_A:
 
@@ -267,6 +307,7 @@ return_codes ret(processor_t* processor_p){
 
     if(IS_POISON(ret_i_p_double)){
 
+        printf(RED "ERROR in ret stack\n" DEFAULT);
         return END;
     }
 
@@ -304,6 +345,27 @@ return_codes out(processor_t* processor_p){
     }
 
     printf(GREEN BOLD "OUT: %lg\n" DEFAULT, a);
+
+    return CONTINUE;
+}
+
+return_codes draw(processor_t* processor_p){
+
+    assert(processor_p);
+
+    putchar('\n');
+
+    for(size_t y = 0; y < CANVAS_HEIGHT; y++){
+
+        printf("%-3llu:", y + 1);
+
+        for(size_t x = 0; x < CANVAS_WIDTH; x++){
+
+            printf("[" YELLOW "%-5lg" DEFAULT "]", processor_p->RAM[y * CANVAS_WIDTH + x]);
+        }
+
+        putchar('\n');
+    }
 
     return CONTINUE;
 }
@@ -376,8 +438,6 @@ void endOfWorking(processor_t* processor_p){
 void procDump(processor_t* processor_p){
 
     assert(processor_p);
-
-    //Smart dump, чекает изменения проца
 
     printf(VIOLET "\n---------------------------------------PROC_DUMP---------------------------------------\n\n" DEFAULT);
 
@@ -471,7 +531,7 @@ double* getRegisterPointer(processor_t* processor_p, unsigned char register_code
             return &processor_p->r_d;
 
         default:
-
+            printf(RED "ERROR: there is no register with code: %X\n",register_code);
             return NULL;
     }
 }

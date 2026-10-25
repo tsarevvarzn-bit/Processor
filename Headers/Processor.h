@@ -18,7 +18,13 @@
 const size_t DEFAULT_STACK_SIZE = 8     ;
 const int    MAX_FILE_NAME      = 100   ;
 const double EPSILON            = 0.0001;
+const size_t RAM_SIZE           = 50    ;
+const size_t CANVAS_WIDTH       = 20    ;
+const size_t CANVAS_HEIGHT      = 20    ;
 
+const size_t VRAM_SIZE          = CANVAS_WIDTH * CANVAS_HEIGHT;
+
+//TODO кружочек на raylib
 
 struct processor_t{
 
@@ -28,10 +34,12 @@ struct processor_t{
     size_t         i_p;
     size_t         len_of_byte_code;
 
-    elem_type         r_a;
-    elem_type         r_b;
-    elem_type         r_c;
-    elem_type         r_d;
+    elem_type      r_a;
+    elem_type      r_b;
+    elem_type      r_c;
+    elem_type      r_d;
+
+    elem_type      RAM[VRAM_SIZE + RAM_SIZE];
 };
 
 enum return_codes{
@@ -54,13 +62,14 @@ bool         isJumping          (const unsigned char argument,
                                  const elem_type     right_elem,
                                  return_codes* const return_code_p);
 
-return_codes popR (processor_t* processor_p);
+return_codes pop  (processor_t* processor_p);
 return_codes push (processor_t* processor_p);
 return_codes jump (processor_t* processor_p);
 return_codes call (processor_t* processor_p);
 return_codes ret  (processor_t* processor_p);
 return_codes in   (processor_t* processor_p);
 return_codes out  (processor_t* processor_p);
+return_codes draw (processor_t* processor_p);
 return_codes hlt  (processor_t* processor_p);
 
 return_codes add  (processor_t* processor_p);
@@ -74,18 +83,19 @@ typedef return_codes (*function_t)(processor_t* processor_p);
 const function_t COMMANDS_FUNCTIONS[] = {
 
     push,
-    popR,
+    pop ,
     jump,
     call,
-    ret,
-    in,
-    out,
-    hlt,
+    ret ,
+    in  ,
+    out ,
+    draw,
+    hlt ,
 
-    add,
-    sub,
-    mul,
-    div,
+    add ,
+    sub ,
+    mul ,
+    div ,
     sqrt
 };
 

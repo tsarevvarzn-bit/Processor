@@ -7,18 +7,24 @@ int main(const int argc, char* const* argv){
     //TODO logger file with txt byte code
     assembler_t assembler = {};
 
-    if(startAssembler(&assembler, argc, argv) == false)
+    if(startAssembler(&assembler, argc, argv) == END){
+
         return errno;
+    }
+
 
     for(; assembler.num_of_completed_assemblies < 2; assembler.num_of_completed_assemblies++){
 
-        assembleTheCode(&assembler);
+        if(assembleTheCode(&assembler) == END){
+
+            return errno;
+        }
     }
 
     write(assembler.descr_out, assembler.byte_code, (unsigned int) assembler.byte_code_idx);
 }
 
-bool startAssembler(assembler_t* assembler_p, const int argc, char* const* argv){
+return_codes startAssembler(assembler_t* assembler_p, const int argc, char* const* argv){
 
     assert(assembler_p);
     assert(argv);
@@ -34,7 +40,7 @@ bool startAssembler(assembler_t* assembler_p, const int argc, char* const* argv)
     if(descr_in == EOF){
 
         printf(RED "ERROR: there is no input file with name: <%s>\n", in_file_name_p);
-        return false;
+        return END;
     }
 
     struct stat file_stats = {};
@@ -56,12 +62,12 @@ bool startAssembler(assembler_t* assembler_p, const int argc, char* const* argv)
 
     assembler_p->num_of_marks   = 0;
 
-    return true;
+    return CONTINUE;
 }
 
 
 
-void assembleTheCode(assembler_t* assembler_p){
+return_codes assembleTheCode(assembler_t* assembler_p){
 
     assert(assembler_p);
 
@@ -94,35 +100,42 @@ void assembleTheCode(assembler_t* assembler_p){
             assembler_p->asm_code_idx++;
         }
 
-        processNextCommand(assembler_p);
+        if(processNextCommand(assembler_p) == END){
+
+
+            return END;
+        }
 
         assembler_p->num_of_command++;
         assembler_p->next_str_idx = assembler_p->asm_code_idx;
 
     }
+
+    return CONTINUE;
 }
 
-void processNextCommand(assembler_t* assembler_p){
+return_codes processNextCommand(assembler_t* assembler_p){
 
         assert(assembler_p);
 
         checkAndResizeUpByteCode(assembler_p);
 
-        char command[MAX_COMMAND_LEN]  = ""   ;
-        bool isStrProcessed            = false;
+        char command[MAX_COMMAND_LEN]  = ""      ;
+        bool isStrProcessed            = false   ;
+        return_codes command_return    = CONTINUE;
 
         sscanf(assembler_p->asm_code + assembler_p->next_str_idx, "%s", command);
 
         printf("From str: %llu, asm code idx: %llu detected command: <%s>\n",
                assembler_p->num_of_command, assembler_p->next_str_idx, command);
 
-        for(size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++){
+        for(size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++){//TODO bin search
 
             if(strncmp(commands[i].name, command, MAX_COMMAND_LEN) == 0){
 
                 if(commands[i].function != NULL){
 
-                    commands[i].function(assembler_p);
+                    command_return = commands[i].function(assembler_p);
 
                 }else{
 
@@ -141,10 +154,12 @@ void processNextCommand(assembler_t* assembler_p){
         if(!isStrProcessed && !isNotCommandStrCorrect(assembler_p, command)){
 
             printf(RED "Syntax error on %llu str\n" DEFAULT, assembler_p->num_of_command);
-            exit(errno);
+            return END;
         }
 
         asmDump(assembler_p);
+
+        return command_return;
 }
 
 bool isNotCommandStrCorrect(assembler_t* assembler_p, const char* const command){
@@ -152,124 +167,248 @@ bool isNotCommandStrCorrect(assembler_t* assembler_p, const char* const command)
     assert(assembler_p);
     assert(command);
 
-    if(command[0] == '\0')
-        return true;
+    if(command[0] == '\0'){
 
-    if(command[0] == '/' && command[1] == '/')
         return true;
+    }
+
+    if(command[0] == '/' && command[1] == '/'){
+
+        return true;
+    }
 
     if(command[0] == ':'){
 
         processMark(assembler_p);
         return true;
-
     }
 
     return false;
 }
 
-void processPush(assembler_t* assembler_p){
+return_codes processPush(assembler_t* assembler_p){
 
     assert(assembler_p);
 
+    pushPopConfig_t pushConfig = {
 
-    char str_argument[MAX_COMMAND_LEN]  = "";
-    double arg = NAN;
+    .arg_number_imm  = NAN,
+    .arg_reg_code    = 0,
+    .command         = PUSH,
+    };
 
-    sscanf(assembler_p->asm_code + assembler_p->next_str_idx + 4, "%s", str_argument);
+    if(parsePushPopArgument(&pushConfig, assembler_p, 4) == END){
 
-    printf(", with argument: <%s>\n\n", str_argument);
+        return END;
+    }
 
-    unsigned char command = PUSH;
+    assembler_p->byte_code[assembler_p->byte_code_idx++] = pushConfig.command;
 
-    if(str_argument[1] == 'X'){
+    if(pushConfig.command & PUSH_ARG_REG){
 
-        command = command | PUSH_ARG_REG;
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = command;
+        assembler_p->byte_code[assembler_p->byte_code_idx++] = pushConfig.arg_reg_code;
+    }
 
-        processRegister(assembler_p, str_argument);
+    if(pushConfig.command & PUSH_ARG_IMMED_CONST){
+
+        const char* arg_byte = (const char*) (&(pushConfig.arg_number_imm));
+
+        for(size_t i = 0; i < sizeof(double); i++){
+
+            assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
+
+        }
+    }
+
+    printf("Arg num imm: %lg, arg reg code: %c, summary command: %X",
+    pushConfig.arg_number_imm, pushConfig.arg_reg_code, pushConfig.command);
+
+    return CONTINUE;
+}
+
+return_codes parsePushPopArgument(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const int len_of_command){
+
+    assert(pushPopConfig_p);
+    assert(assembler_p);
+
+    char first_arg_str [MAX_COMMAND_LEN]  = "";
+    char second_arg_str[MAX_COMMAND_LEN]  = "";
+
+    int num_of_correct_arguments = sscanf(assembler_p->asm_code + assembler_p->next_str_idx + len_of_command + 1,
+    "%[^] +\r]%*[^-0-9]%[^] \r]", first_arg_str, second_arg_str);
+
+    printf(", with %d arguments: <%s>, <%s>\n\n", num_of_correct_arguments, first_arg_str, second_arg_str);
+
+    if(num_of_correct_arguments == 1){
+
+        return parsePushPopWithOneArgument(pushPopConfig_p, assembler_p, first_arg_str, second_arg_str);
+
+    }else if(num_of_correct_arguments == 2){
+
+        return parsePushPopWithTwoArguments(pushPopConfig_p, assembler_p, first_arg_str, second_arg_str);
 
     }else{
 
-        command = command | PUSH_ARG_IMMED_CONST;
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = command;
-
-        sscanf(assembler_p->asm_code + assembler_p->next_str_idx + 4, "%lg", &arg);
-
-        if(isnan(arg)){
-
-            printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, PUSH have NAN argument\n" DEFAULT,
-            assembler_p->num_of_command, assembler_p->next_str_idx);
-            exit(0);
-
-        }else{
-
-            const char* arg_byte = (const char*) (&arg);
-
-            for(size_t i = 0; i < sizeof(double); i++){
-
-                assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
-
-            }
-        }
+        printf(RED "ERROR: incorrect input for push in %llu str: there is no arguments\n" DEFAULT, assembler_p->num_of_command);
+        return END;
     }
 }
 
-void processPop(assembler_t* assembler_p){
+return_codes parsePushPopWithOneArgument(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str){
+
+    assert(pushPopConfig_p);
+    assert(assembler_p);
+    assert(first_arg_str);
+    assert(second_arg_str);
+
+    char shift_for_first_arg_str = 0;
+
+    if(first_arg_str[0] == '['){
+
+        pushPopConfig_p->command = pushPopConfig_p->command | PUSH_ARG_RAM;
+        shift_for_first_arg_str = 1;
+    }
+
+    if(first_arg_str[shift_for_first_arg_str + 1] == 'X'){
+
+        pushPopConfig_p->command = pushPopConfig_p->command | PUSH_ARG_REG;
+
+        if(processRegister(assembler_p, first_arg_str + shift_for_first_arg_str, &pushPopConfig_p->arg_reg_code) == END){
+
+            return END;
+        }
+
+    }else{
+
+        pushPopConfig_p->command = pushPopConfig_p->command | PUSH_ARG_IMMED_CONST;
+
+        if(sscanf(first_arg_str + shift_for_first_arg_str, "%lg", &(pushPopConfig_p->arg_number_imm)) != 1){
+
+            printf(RED "ERROR: incorrect input for push in %llu str, incorrect argument: <%s>\n" DEFAULT,
+            assembler_p->num_of_command, first_arg_str);
+            return END;
+        }
+    }
+
+    return CONTINUE;
+}
+
+return_codes parsePushPopWithTwoArguments(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str){
+
+    assert(pushPopConfig_p);
+    assert(assembler_p);
+    assert(first_arg_str);
+    assert(second_arg_str);
+
+    char shift_for_first_arg_str = 0;
+
+    pushPopConfig_p->command = pushPopConfig_p->command | PUSH_ARG_REG | PUSH_ARG_IMMED_CONST;
+
+    if(first_arg_str[0] == '['){
+
+        pushPopConfig_p->command = pushPopConfig_p->command | PUSH_ARG_RAM;
+        shift_for_first_arg_str = 1;
+    }
+
+    if(processRegister(assembler_p, first_arg_str + shift_for_first_arg_str, &pushPopConfig_p->arg_reg_code) == END){
+
+        return END;
+    }
+
+    if(sscanf(second_arg_str, "%lg", &(pushPopConfig_p->arg_number_imm)) != 1){
+
+        printf(RED "ERROR: incorrect input for push in %llu str, incorrect second argument: <%s>\n" DEFAULT,
+        assembler_p->num_of_command, second_arg_str);
+        return END;
+    }
+
+    return CONTINUE;
+}
+
+return_codes processPop(assembler_t* assembler_p){
 
     assert(assembler_p);
 
 
-    char str_argument[100]  = "";
+    pushPopConfig_t pushConfig = {
 
-    sscanf(assembler_p->asm_code + assembler_p->next_str_idx + 4, "%s", str_argument);
+    .arg_number_imm  = NAN,
+    .arg_reg_code    = 0,
+    .command         = POP,
+    };
 
-    printf(", with argument: <%s>\n\n", str_argument);
+    if(parsePushPopArgument(&pushConfig, assembler_p, 3) == END){
 
-    assembler_p->byte_code[assembler_p->byte_code_idx++] = POPr;
+        return END;
+    }
 
-    processRegister(assembler_p, str_argument);
+    //TODO new func, in push the same
+    assembler_p->byte_code[assembler_p->byte_code_idx++] = pushConfig.command;
+
+    if(pushConfig.command & PUSH_ARG_REG){
+
+        assembler_p->byte_code[assembler_p->byte_code_idx++] = pushConfig.arg_reg_code;
+    }
+
+    if(pushConfig.command & PUSH_ARG_IMMED_CONST){
+
+        const char* arg_byte = (const char*) (&(pushConfig.arg_number_imm));
+
+        for(size_t i = 0; i < sizeof(double); i++){
+
+            assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
+
+        }
+    }
+
+    printf("Arg num imm: %lg, arg reg code: %c, summary command: %X",
+    pushConfig.arg_number_imm, pushConfig.arg_reg_code, pushConfig.command);
+
+    return CONTINUE;
 }
 
-void processRegister(assembler_t* assembler_p, const char* const name_of_reg){
+return_codes processRegister(assembler_t* assembler_p, const char* const name_of_reg, unsigned char* const reg_code_p){
 
     assert(assembler_p);
     assert(name_of_reg);
+    assert(reg_code_p);
 
     if(      strcmp(name_of_reg, "AX") == 0){
 
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = AX;
+        *reg_code_p = AX;
 
     }else if(strcmp(name_of_reg, "BX") == 0){
 
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = BX;
+        *reg_code_p = BX;
 
     }else if(strcmp(name_of_reg, "CX") == 0){
 
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = CX;
+        *reg_code_p = CX;
 
     }else if(strcmp(name_of_reg, "DX") == 0){
 
-        assembler_p->byte_code[assembler_p->byte_code_idx++] = DX;
+        *reg_code_p = DX;
 
     }else{
 
         printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, POPr have <%s> - incorrect argument\n" DEFAULT,
         assembler_p->num_of_command, assembler_p->next_str_idx, name_of_reg);
-        exit(0);
+        return END;
     }
+
+    return CONTINUE;
 }
 
-#define CONDITIONAL_JUMP(func_name, code, len_of_command)                   \
-                                                                            \
-void func_name(assembler_t* assembler_p){                                   \
-                                                                            \
-    assert(assembler_p);                                                    \
-                                                                            \
-    unsigned char command = JUMP;                                           \
-    assembler_p->byte_code[assembler_p->byte_code_idx++] = command | code;  \
-                                                                            \
-    decryptMark(assembler_p, assembler_p->next_str_idx + len_of_command);   \
+#define CONDITIONAL_JUMP(func_name, code, len_of_command)                           \
+                                                                                    \
+return_codes func_name(assembler_t* assembler_p){                                   \
+                                                                                    \
+    assert(assembler_p);                                                            \
+                                                                                    \
+    unsigned char command = JUMP;                                                   \
+    assembler_p->byte_code[assembler_p->byte_code_idx++] = command | code;          \
+                                                                                    \
+    return decryptMark(assembler_p, assembler_p->next_str_idx + len_of_command);    \
 }
 
 CONDITIONAL_JUMP(processJump, JUMP_ARG_ABS, 4)
@@ -282,16 +421,16 @@ CONDITIONAL_JUMP(processJNE,  JUMP_ARG_NE,  3)
 
 #undef CONDITIONAL_JUMP
 
-void processCall(assembler_t* assembler_p){
+return_codes processCall(assembler_t* assembler_p){
 
     assert(assembler_p);
 
     assembler_p->byte_code[assembler_p->byte_code_idx++] = CALL;
 
-    decryptMark(assembler_p, assembler_p->next_str_idx + 4);
+    return decryptMark(assembler_p, assembler_p->next_str_idx + 4);
 }
 
-void decryptMark(assembler_t* assembler_p, size_t mark_idx){
+return_codes decryptMark(assembler_t* assembler_p, size_t mark_idx){
 
     assert(assembler_p);
 
@@ -303,7 +442,7 @@ void decryptMark(assembler_t* assembler_p, size_t mark_idx){
         printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, J... have <%c> after P\n" DEFAULT,
         assembler_p->num_of_command, assembler_p->next_str_idx, assembler_p->asm_code[assembler_p->next_str_idx + 4]);
 
-        exit(errno);
+        return END;
     }
 
     if(assembler_p->asm_code[mark_idx + 1] == ':'){
@@ -313,14 +452,14 @@ void decryptMark(assembler_t* assembler_p, size_t mark_idx){
         if(! findMark(assembler_p, mark_name, &jump_index) && assembler_p->num_of_completed_assemblies >= 1){
 
             printf(RED "ERROR: non-defined mark: <%s>, on str: %llu", assembler_p->asm_code + mark_idx + 2, assembler_p->num_of_command);
-            exit(errno);
+            return END;
         }
 
     }else if(sscanf(assembler_p->asm_code + mark_idx + 2, "%llu", &jump_index) != 1){
 
         printf(RED "INCORRECT COMMAND IN %llu string, asm_code_idx = %llu, J... have <%llu> jump_index argument\n" DEFAULT,
         assembler_p->num_of_command, assembler_p->next_str_idx, jump_index);
-        exit(errno);
+        return END;
     }
 
     char* arg_byte = (char*) (&jump_index);
@@ -330,6 +469,8 @@ void decryptMark(assembler_t* assembler_p, size_t mark_idx){
         assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
 
     }
+
+    return CONTINUE;
 }
 
 bool findMark(assembler_t* assembler_p, const char* const name, size_t* mark_idx_p){
@@ -350,7 +491,7 @@ bool findMark(assembler_t* assembler_p, const char* const name, size_t* mark_idx
     return false;
 }
 
-void processMark(assembler_t* assembler_p){
+return_codes processMark(assembler_t* assembler_p){
 
     assert(assembler_p);
 
@@ -361,13 +502,13 @@ void processMark(assembler_t* assembler_p){
 
     if(findMark(assembler_p, mark_name, &mark_value) == true){
 
-        return;
+        return CONTINUE;
     }
 
     if(assembler_p->num_of_marks >= MAX_MARK_NAME_LEN - 1){
 
         printf(RED "ERROR: to many marks!\n" DEFAULT);
-        exit(errno);
+        return END;
     }
 
     strcpy(assembler_p->marks[assembler_p->num_of_marks].name, mark_name);
@@ -375,9 +516,11 @@ void processMark(assembler_t* assembler_p){
 
     printf(GREEN "DEFINED NEW MARK: name <%s>, value: <%llu>" DEFAULT, mark_name, assembler_p->byte_code_idx);
     assembler_p->num_of_marks++;
+
+    return CONTINUE;
 }
 
-void checkAndResizeUpByteCode(assembler_t* assembler_p){
+return_codes checkAndResizeUpByteCode(assembler_t* assembler_p){
 
     assert(assembler_p);
 
@@ -386,12 +529,16 @@ void checkAndResizeUpByteCode(assembler_t* assembler_p){
         if((assembler_p->byte_code = (char*) realloc(assembler_p->byte_code, assembler_p->byte_code_len * 2)) == NULL){
 
             printf(RED "ERROR: there is no enough memory, can't resize up assembler_p->byte_code, assembler_p->byte_code_len: %llu" DEFAULT, assembler_p->byte_code_len);
-            exit(errno);
+
+            return END;
+
         }else{
 
             printf("Correct reallocation of byte_code\n");
         }
     }
+
+    return CONTINUE;
 }
 
 void asmDump(assembler_t* assembler_p){
@@ -409,10 +556,11 @@ void asmDump(assembler_t* assembler_p){
 
         printf("\tName: <" YELLOW "%s" DEFAULT ">, idx: <" GREEN "%llu" DEFAULT ">\n", assembler_p->marks[i].name, assembler_p->marks[i].idx);
     }
+
     printf("\n");
 }
 
-void processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p){
+return_codes processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p){
 
     assert(argv);
     assert(name_from_p);
@@ -440,9 +588,11 @@ void processCMDArguments(const int argc, char* const * argv, char** const name_f
     if(*name_from_p == NULL || *name_to_p == NULL){
 
         printf("ERROR: please, enter correct CMD arguments: -f name_of_input_file.txt -t name_of_output_file.txt\n");
-        exit(EXIT_FAILURE);//Надо убрать
+
+        return END;
     }
 
+    return CONTINUE;
 }
 /*
 . . . . . . # . .

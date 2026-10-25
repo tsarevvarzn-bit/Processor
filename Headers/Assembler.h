@@ -14,12 +14,16 @@
 #include "Commands.h"
 #include "Colors.h"
 
-const int    MAX_COMMAND_LEN = 100;
-const int    MAX_MARK_NAME_LEN = 100;
-const int    NUM_OF_MARKS = 10;
-const size_t DEFAULT_MARK_VALUE = 0;
+const int    MAX_COMMAND_LEN    = 100;
+const int    MAX_MARK_NAME_LEN  = 100;
+const int    NUM_OF_MARKS       =  10;
+const size_t DEFAULT_MARK_VALUE =   0;
 
+enum return_codes{
 
+    CONTINUE = 0,
+    END      = 1,
+};
 
 struct mark_t{
 
@@ -29,27 +33,35 @@ struct mark_t{
 
 struct assembler_t{
 
-    char*  asm_code;
+    char*  asm_code ;
     char*  byte_code;
 
-    size_t asm_code_idx;
+    size_t asm_code_idx ;
     size_t byte_code_idx;
 
-    size_t asm_code_len;
+    size_t asm_code_len ;
     size_t byte_code_len;
 
-    size_t next_str_idx;
+    size_t next_str_idx  ;
     size_t num_of_command;
 
     mark_t marks[NUM_OF_MARKS];
-    int    num_of_marks;
+    int    num_of_marks       ;
 
     int    num_of_completed_assemblies;
 
     int    descr_out;
 };
 
-typedef void (*function_t)(assembler_t* assembler_p);
+struct pushPopConfig_t{
+
+    double        arg_number_imm ;
+    unsigned char arg_reg_code   ;
+
+    unsigned char command        ;
+};
+
+typedef return_codes (*function_t)(assembler_t* assembler_p);
 
 struct command_t{
 
@@ -58,33 +70,38 @@ struct command_t{
     function_t     function             ;
 };
 
-void processCMDArguments     (const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
-bool startAssembler          (assembler_t* assembler_p, const int argc, char* const* argv);
-void assembleTheCode         (assembler_t* assembler_p);
-void processNextCommand      (assembler_t* assembler_p);
-void checkAndResizeUpByteCode(assembler_t* assembler_p);
-bool isNotCommandStrCorrect  (assembler_t* assembler_p, const char* const command);
-void asmDump                 (assembler_t* assembler_p);
+return_codes processCMDArguments     (const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
+return_codes startAssembler          (assembler_t* assembler_p, const int argc, char* const* argv);
+return_codes assembleTheCode         (assembler_t* assembler_p);
+return_codes processNextCommand      (assembler_t* assembler_p);
+return_codes checkAndResizeUpByteCode(assembler_t* assembler_p);
+bool isNotCommandStrCorrect          (assembler_t* assembler_p, const char* const command);
+void asmDump                         (assembler_t* assembler_p);
 
 
-void processPush(assembler_t* assembler_p);
-void processPop (assembler_t* assembler_p);
-void processJump(assembler_t* assembler_p);
-void processJA  (assembler_t* assembler_p);
-void processJAE (assembler_t* assembler_p);
-void processJB  (assembler_t* assembler_p);
-void processJBE (assembler_t* assembler_p);
-void processJE  (assembler_t* assembler_p);
-void processJNE (assembler_t* assembler_p);
-void processCall(assembler_t* assembler_p);
-void processMark(assembler_t* assembler_p);
+return_codes processPush(assembler_t* assembler_p);
+return_codes processPop (assembler_t* assembler_p);
+return_codes processJump(assembler_t* assembler_p);
+return_codes processJA  (assembler_t* assembler_p);
+return_codes processJAE (assembler_t* assembler_p);
+return_codes processJB  (assembler_t* assembler_p);
+return_codes processJBE (assembler_t* assembler_p);
+return_codes processJE  (assembler_t* assembler_p);
+return_codes processJNE (assembler_t* assembler_p);
+return_codes processCall(assembler_t* assembler_p);
+return_codes processMark(assembler_t* assembler_p);
 
-void decryptMark    (assembler_t* assembler_p, size_t mark_idx);
-bool findMark       (assembler_t* assembler_p, const char* const name, size_t* mark_idx_p);
-void processRegister(assembler_t* assembler_p, const char* const name_of_reg);
+return_codes decryptMark    (assembler_t* assembler_p, size_t mark_idx);
+bool findMark               (assembler_t* assembler_p, const char* const name, size_t* mark_idx_p);
+return_codes processRegister(assembler_t* assembler_p, const char* const name_of_reg, unsigned char* const reg_code_p);
 
+return_codes parsePushPopArgument        (pushPopConfig_t* pushConfig_p,    assembler_t* assembler_p, const int len_of_command);
+return_codes parsePushPopWithOneArgument (pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
+return_codes parsePushPopWithTwoArguments(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
 
-command_t commands[]{
+//TODO градация серого в рейлибе на примере кружочка, 255 оттенков
+
+const command_t commands[]{
 
     {.name = "PUSH", .code = ZERO, .function = processPush},
     {.name = "POP",  .code = ZERO, .function = processPop },
@@ -101,6 +118,7 @@ command_t commands[]{
     {.name = "RET" , .code = RET , .function = NULL       },
     {.name = "IN"  , .code = IN  , .function = NULL       },
     {.name = "OUT" , .code = OUT , .function = NULL       },
+    {.name = "DRAW", .code = DRAW, .function = NULL       },
     {.name = "HLT" , .code = HLT , .function = NULL       },
 
     {.name = "ADD" , .code = ADD , .function = NULL       },
@@ -108,8 +126,6 @@ command_t commands[]{
     {.name = "MUL" , .code = MUL , .function = NULL       },
     {.name = "DIV" , .code = DIV , .function = NULL       },
     {.name = "SQRT", .code = SQRT, .function = NULL       },
-
-    //{.name = ":"   , .code = ZERO, .function = processMark},
 };
 
 #endif
