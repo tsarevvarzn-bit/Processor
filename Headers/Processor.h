@@ -78,6 +78,10 @@ return_codes mul  (processor_t* processor_p);
 return_codes div  (processor_t* processor_p);
 return_codes sqrt (processor_t* processor_p);
 
+
+return_codes popRAM(processor_t* processor_p, elem_type elem, unsigned char argument);
+return_codes popReg(processor_t* processor_p, elem_type elem);
+
 typedef return_codes (*function_t)(processor_t* processor_p);
 
 const function_t COMMANDS_FUNCTIONS[] = {

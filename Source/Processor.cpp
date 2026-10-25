@@ -133,57 +133,72 @@ return_codes pop(processor_t* processor_p){
 
     if(argument & POP_ARG_RAM){
 
-        double res = 0;
-
-        if(argument & PUSH_ARG_REG){
-
-            //TODO new func
-            unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
-            elem_type* register_p = NULL;
-
-            if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
-
-                res += *register_p;
-
-            }else{
-
-                printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
-                return END;
-            }
-        }
-
-        if(argument & PUSH_ARG_IMMED_CONST){
-
-            res += *((elem_type*) (processor_p->byte_code + processor_p->i_p));
-            processor_p->i_p += sizeof(elem_type);
-        }
-
-        processor_p->RAM[(size_t) res] = elem;
+        return popRAM(processor_p, elem, argument);
 
     }else if(argument & POP_ARG_REG){
 
-        unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
-        elem_type* register_p = NULL;
-
-        if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
-
-            *register_p = elem;
-
-        }else{
-
-            printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
-            return END;
-        }
+        return popReg(processor_p, elem);
 
     }else{
 
         printf(RED "ERROR: incorrect argument of pop, left 3 bits: %X\n" DEFAULT, argument);
         return END;
     }
+}
+
+return_codes popRAM(processor_t* processor_p, elem_type elem, unsigned char argument){
+
+    assert(processor_p);
+
+    double res = 0;
+
+    if(argument & PUSH_ARG_REG){
+
+        //TODO new func
+        unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
+        elem_type* register_p = NULL;
+
+        if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
+
+            res += *register_p;
+
+        }else{
+
+            printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
+            return END;
+        }
+    }
+
+    if(argument & PUSH_ARG_IMMED_CONST){
+
+        res += *((elem_type*) (processor_p->byte_code + processor_p->i_p));
+        processor_p->i_p += sizeof(elem_type);
+    }
+
+    processor_p->RAM[(size_t) res] = elem;
 
     return CONTINUE;
 }
 
+return_codes popReg(processor_t* processor_p, elem_type elem){
+
+    assert(processor_p);
+
+    unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
+    elem_type* register_p = NULL;
+
+    if((register_p = getRegisterPointer(processor_p, register_code)) != NULL){
+
+        *register_p = elem;
+
+    }else{
+
+        printf(RED "ERROR: incorrect argument of PUSH, code of register: <%hhu>" DEFAULT, register_code);
+        return END;
+    }
+
+    return CONTINUE;
+}
 
 return_codes jump(processor_t* processor_p){
 

@@ -98,7 +98,6 @@ return_codes processRegister(assembler_t* assembler_p, const char* const name_of
 return_codes parsePushPopArgument        (pushPopConfig_t* pushConfig_p,    assembler_t* assembler_p, const int len_of_command);
 return_codes parsePushPopWithOneArgument (pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
 return_codes parsePushPopWithTwoArguments(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
-
 //TODO градация серого в рейлибе на примере кружочка, 255 оттенков
 
 const command_t commands[]{

@@ -102,7 +102,6 @@ return_codes assembleTheCode(assembler_t* assembler_p){
 
         if(processNextCommand(assembler_p) == END){
 
-
             return END;
         }
 
@@ -342,7 +341,6 @@ return_codes processPop(assembler_t* assembler_p){
         return END;
     }
 
-    //TODO new func, in push the same
     assembler_p->byte_code[assembler_p->byte_code_idx++] = pushConfig.command;
 
     if(pushConfig.command & PUSH_ARG_REG){
@@ -357,7 +355,6 @@ return_codes processPop(assembler_t* assembler_p){
         for(size_t i = 0; i < sizeof(double); i++){
 
             assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
-
         }
     }
 
