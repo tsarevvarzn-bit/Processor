@@ -12,13 +12,14 @@ enum commands_codes{//Пять правый битов
     IN    = 0x06,
     OUT   = 0x07,
     DRAW  = 0x08,
-    HLT   = 0x09,
+    DELAY = 0x09,
+    HLT   = 0x0A,
 
-    ADD   = 0x0A,
-    SUB   = 0x0B,
-    MUL   = 0x0C,
-    DIV   = 0x0D,
-    SQRT  = 0x0E,
+    ADD   = 0x0B,
+    SUB   = 0x0C,
+    MUL   = 0x0D,
+    DIV   = 0x0E,
+    SQRT  = 0x0F,
 };
 
 enum jump_arguments{//Три левых бита

@@ -4,7 +4,6 @@
 
 int main(const int argc, char* const* argv){
 
-    //TODO logger file with txt byte code
     assembler_t assembler = {};
 
     if(startAssembler(&assembler, argc, argv) == END){
@@ -61,6 +60,8 @@ return_codes startAssembler(assembler_t* assembler_p, const int argc, char* cons
     assembler_p->num_of_command = 1;
 
     assembler_p->num_of_marks   = 0;
+
+
 
     return CONTINUE;
 }
@@ -425,6 +426,30 @@ return_codes processCall(assembler_t* assembler_p){
     assembler_p->byte_code[assembler_p->byte_code_idx++] = CALL;
 
     return decryptMark(assembler_p, assembler_p->next_str_idx + 4);
+}
+
+return_codes processDelay(assembler_t* assembler_p){
+
+    assert(assembler_p);
+
+    assembler_p->byte_code[assembler_p->byte_code_idx++] = DELAY;
+
+    double delay_time = 0;
+
+    if(sscanf(assembler_p->asm_code + assembler_p->next_str_idx + 5, "%lg", &delay_time) != 1){
+
+        printf(RED "ERROR: incorrect argument of delay on %llu str\n", assembler_p->num_of_command);
+        return END;
+    }
+
+    char* arg_byte = (char*) (&delay_time);
+
+    for(size_t i = 0; i < sizeof(double); i++){
+
+        assembler_p->byte_code[assembler_p->byte_code_idx++] = arg_byte[i];
+    }
+
+    return CONTINUE;
 }
 
 return_codes decryptMark(assembler_t* assembler_p, size_t mark_idx){

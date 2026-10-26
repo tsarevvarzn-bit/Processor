@@ -7,8 +7,7 @@ PUSH 0
 POP BX
 
 :y_cycle
-                PUSH 222222222
-                OUT
+
     PUSH BX
     PUSH 19
     JA :y_end

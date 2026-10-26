@@ -1,9 +1,18 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
+#include "..\Raylib\raylib.h"
+
+#undef RED
+#undef GREEN
+#undef YELLOW
+#undef BLUE
+#undef VIOLET
+#undef CYAN
+
 #include "..\Stack\Stack.cpp"
+
 #include "Commands.h"
-//TODO safe!!!
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +30,7 @@ const double EPSILON            = 0.0001;
 const size_t RAM_SIZE           = 50    ;
 const size_t CANVAS_WIDTH       = 20    ;
 const size_t CANVAS_HEIGHT      = 20    ;
+const int    PIXEL_SIZE         = 50    ;
 
 const size_t VRAM_SIZE          = CANVAS_WIDTH * CANVAS_HEIGHT;
 
@@ -70,6 +80,7 @@ return_codes ret  (processor_t* processor_p);
 return_codes in   (processor_t* processor_p);
 return_codes out  (processor_t* processor_p);
 return_codes draw (processor_t* processor_p);
+return_codes delay(processor_t* processor_p);
 return_codes hlt  (processor_t* processor_p);
 
 return_codes add  (processor_t* processor_p);
@@ -86,20 +97,21 @@ typedef return_codes (*function_t)(processor_t* processor_p);
 
 const function_t COMMANDS_FUNCTIONS[] = {
 
-    push,
-    pop ,
-    jump,
-    call,
-    ret ,
-    in  ,
-    out ,
-    draw,
-    hlt ,
+    push ,
+    pop  ,
+    jump ,
+    call ,
+    ret  ,
+    in   ,
+    out  ,
+    draw ,
+    delay,
+    hlt  ,
 
-    add ,
-    sub ,
-    mul ,
-    div ,
+    add  ,
+    sub  ,
+    mul  ,
+    div  ,
     sqrt
 };
 

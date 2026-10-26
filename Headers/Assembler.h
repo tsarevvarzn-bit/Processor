@@ -79,17 +79,18 @@ bool isNotCommandStrCorrect          (assembler_t* assembler_p, const char* cons
 void asmDump                         (assembler_t* assembler_p);
 
 
-return_codes processPush(assembler_t* assembler_p);
-return_codes processPop (assembler_t* assembler_p);
-return_codes processJump(assembler_t* assembler_p);
-return_codes processJA  (assembler_t* assembler_p);
-return_codes processJAE (assembler_t* assembler_p);
-return_codes processJB  (assembler_t* assembler_p);
-return_codes processJBE (assembler_t* assembler_p);
-return_codes processJE  (assembler_t* assembler_p);
-return_codes processJNE (assembler_t* assembler_p);
-return_codes processCall(assembler_t* assembler_p);
-return_codes processMark(assembler_t* assembler_p);
+return_codes processPush (assembler_t* assembler_p);
+return_codes processPop  (assembler_t* assembler_p);
+return_codes processJump (assembler_t* assembler_p);
+return_codes processJA   (assembler_t* assembler_p);
+return_codes processJAE  (assembler_t* assembler_p);
+return_codes processJB   (assembler_t* assembler_p);
+return_codes processJBE  (assembler_t* assembler_p);
+return_codes processJE   (assembler_t* assembler_p);
+return_codes processJNE  (assembler_t* assembler_p);
+return_codes processCall (assembler_t* assembler_p);
+return_codes processDelay(assembler_t* assembler_p);
+return_codes processMark (assembler_t* assembler_p);
 
 return_codes decryptMark    (assembler_t* assembler_p, size_t mark_idx);
 bool findMark               (assembler_t* assembler_p, const char* const name, size_t* mark_idx_p);
@@ -102,29 +103,30 @@ return_codes parsePushPopWithTwoArguments(pushPopConfig_t* pushPopConfig_p, asse
 
 const command_t commands[]{
 
-    {.name = "PUSH", .code = ZERO, .function = processPush},
-    {.name = "POP",  .code = ZERO, .function = processPop },
+    {.name = "PUSH" , .code = ZERO, .function = processPush },
+    {.name = "POP"  , .code = ZERO, .function = processPop  },
 
-    {.name = "JUMP", .code = ZERO, .function = processJump},
-    {.name = "JA"  , .code = ZERO, .function = processJA  },
-    {.name = "JAE" , .code = ZERO, .function = processJAE },
-    {.name = "JB"  , .code = ZERO, .function = processJB  },
-    {.name = "JBE" , .code = ZERO, .function = processJBE },
-    {.name = "JE"  , .code = ZERO, .function = processJE  },
-    {.name = "JNE" , .code = ZERO, .function = processJNE },
+    {.name = "JUMP" , .code = ZERO, .function = processJump },
+    {.name = "JA"   , .code = ZERO, .function = processJA   },
+    {.name = "JAE"  , .code = ZERO, .function = processJAE  },
+    {.name = "JB"   , .code = ZERO, .function = processJB   },
+    {.name = "JBE"  , .code = ZERO, .function = processJBE  },
+    {.name = "JE"   , .code = ZERO, .function = processJE   },
+    {.name = "JNE"  , .code = ZERO, .function = processJNE  },
 
-    {.name = "CALL", .code = ZERO, .function = processCall},
-    {.name = "RET" , .code = RET , .function = NULL       },
-    {.name = "IN"  , .code = IN  , .function = NULL       },
-    {.name = "OUT" , .code = OUT , .function = NULL       },
-    {.name = "DRAW", .code = DRAW, .function = NULL       },
-    {.name = "HLT" , .code = HLT , .function = NULL       },
+    {.name = "CALL" , .code = ZERO, .function = processCall },
+    {.name = "RET"  , .code = RET , .function = NULL        },
+    {.name = "IN"   , .code = IN  , .function = NULL        },
+    {.name = "OUT"  , .code = OUT , .function = NULL        },
+    {.name = "DRAW" , .code = DRAW, .function = NULL        },
+    {.name = "DELAY", .code = ZERO, .function = processDelay},
+    {.name = "HLT"  , .code = HLT , .function = NULL        },
 
-    {.name = "ADD" , .code = ADD , .function = NULL       },
-    {.name = "SUB" , .code = SUB , .function = NULL       },
-    {.name = "MUL" , .code = MUL , .function = NULL       },
-    {.name = "DIV" , .code = DIV , .function = NULL       },
-    {.name = "SQRT", .code = SQRT, .function = NULL       },
+    {.name = "ADD"  , .code = ADD , .function = NULL        },
+    {.name = "SUB"  , .code = SUB , .function = NULL        },
+    {.name = "MUL"  , .code = MUL , .function = NULL        },
+    {.name = "DIV"  , .code = DIV , .function = NULL        },
+    {.name = "SQRT" , .code = SQRT, .function = NULL        },
 };
 
 #endif

@@ -66,6 +66,8 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
 
     ON_COMMANDS_DUMP(printf("Len of byte code: %llu", processor_p->len_of_byte_code);)
 
+    InitWindow(CANVAS_WIDTH * PIXEL_SIZE, CANVAS_HEIGHT * PIXEL_SIZE, "My Processor");
+
     close(descr);
     putchar('\n');
 }
@@ -154,7 +156,6 @@ return_codes popRAM(processor_t* processor_p, elem_type elem, unsigned char argu
 
     if(argument & PUSH_ARG_REG){
 
-        //TODO new func
         unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));
         elem_type* register_p = NULL;
 
@@ -382,6 +383,60 @@ return_codes draw(processor_t* processor_p){
         putchar('\n');
     }
 
+    double color = 0;
+
+    BeginDrawing();
+
+    ClearBackground(WHITE);
+
+    for(size_t y = 0; y < CANVAS_HEIGHT; y++){
+
+        for(size_t x = 0; x < CANVAS_WIDTH; x++){
+
+
+
+            color = processor_p->RAM[y * CANVAS_WIDTH + x];
+
+            DrawRectangle(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE, {color, color, color, 255});
+
+
+        }
+
+    }
+
+    EndDrawing();
+
+//     while (!WindowShouldClose()) {
+//         BeginDrawing();
+//
+//         ClearBackground(BLACK);
+//
+//         for (size_t y = 0; y < CANVAS_HEIGHT; y++) {
+//             for (size_t x = 0; x < CANVAS_WIDTH; x++) {
+//                 double color = processor_p->RAM[y * CANVAS_WIDTH + x];
+//
+//                 DrawRectangle(x, y, 1, 1,
+//                     {(unsigned char)color,
+//                     (unsigned char)color,
+//                     (unsigned char)color, 255});
+//             }
+//         }
+//
+//         EndDrawing();
+//     }
+
+    return CONTINUE;
+}
+
+return_codes delay(processor_t* processor_p){
+
+    assert(processor_p);
+
+    double delay_time_s = *((double*) (processor_p->byte_code + processor_p->i_p));
+    processor_p->i_p += sizeof(double);
+
+    WaitTime(delay_time_s);
+
     return CONTINUE;
 }
 
@@ -446,6 +501,8 @@ void endOfWorking(processor_t* processor_p){
     stackDelete(processor_p->computing_stack);
 
     free(processor_p->byte_code);
+
+    CloseWindow();
 
     printf("HLT\n");
 }
