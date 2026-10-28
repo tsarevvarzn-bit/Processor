@@ -74,13 +74,15 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
 
 
 return_codes push(processor_t* processor_p){
-
+//TODO теннис с DVD или ракета с массой: каждое нажатие - дает импульс, но сгорает топливо. С течением времени масса уменьшается, скорость увеличивается
+//4 движка, но не крутится, если скорость посадки больше пороговой - разбились
     assert(processor_p);
 
     unsigned char argument = processor_p->byte_code[processor_p->i_p - 1] & 0b1110'0000;
 
     double res = 0;
 
+    //TODO общая функция, считающая адрес, к которому нужно обратиться
     if(argument & PUSH_ARG_REG){
 
         unsigned char register_code = *((unsigned char*) (processor_p->byte_code + processor_p->i_p++));

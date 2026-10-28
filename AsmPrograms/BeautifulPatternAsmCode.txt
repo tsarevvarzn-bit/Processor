@@ -1,4 +1,3 @@
-
 //AX - x, BX - y, CX - координата x
 
 PUSH 0
@@ -6,40 +5,15 @@ POP AX
 PUSH 0
 POP BX
 
-PUSH 10
-POP CX
 
 
-
-:main_cycle
-
-    CALL :draw_circle
-//    DELAY 2
-
-    PUSH CX
-    PUSH 5
-    ADD
-    POP CX
-
-    PUSH CX
-    OUT
-
-    PUSH CX
-    PUSH 200
-
-    JB :main_cycle
-
+CALL :draw_circle
 DELAY 5
 HLT
 
 
 
 :draw_circle
-
-    PUSH 0
-    POP AX
-    PUSH 0
-    POP BX
 
     :y_cycle
 
@@ -62,11 +36,6 @@ HLT
             PUSH 1
             ADD
             POP AX
-
-//            PUSH BX
-//            OUT
-//            PUSH AX
-//            OUT
 
             JUMP :x_cycle
 
@@ -93,22 +62,25 @@ RET
     ADD
     POP DX
 
+//    CALL :get_pixel_number
+//  DX - номер пикселя, который рисуем
+
     PUSH AX
-    PUSH CX
+    PUSH 125
     SUB
 
     PUSH AX
-    PUSH CX
+    PUSH 125
     SUB
 
     MUL
 
     PUSH BX
-    PUSH 50
+    PUSH 125
     SUB
 
     PUSH BX
-    PUSH 50
+    PUSH 125
     SUB
 
     MUL
@@ -116,19 +88,47 @@ RET
     ADD
 
     PUSH 50
-    JA :miss_point
+//  Квадрат радиуса
 
-        PUSH 67
+    SUB
+
+    POP CX
+    PUSH CX
+    PUSH CX
+    MUL
+    SQRT
+    SQRT
+
+    POP CX
+    PUSH CX
+    PUSH CX
+
+//Взяли модуль разности расстояния до центра и радиуса и размножили
+
+    PUSH 20
+//  Половина толщины бублика
+    SUB
+
+
+    POP CX
+    PUSH CX
+    PUSH CX
+//Размножили отклонение от R
+
+    PUSH 0
+    JB :missed_point
+
+        PUSH -10
+        MUL
+        PUSH 200
+        ADD
         POP [DX]
         RET
 
-    :miss_point
+    :missed_point
 
+//      Сбрасываем копию отклонения
+        POP [DX]
         PUSH 0
         POP [DX]
         RET
-
-
-//    DELAY 0.01
-//    DRAW
-    RET

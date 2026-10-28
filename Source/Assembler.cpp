@@ -236,7 +236,7 @@ return_codes parsePushPopArgument(pushPopConfig_t* pushPopConfig_p, assembler_t*
     char second_arg_str[MAX_COMMAND_LEN]  = "";
 
     int num_of_correct_arguments = sscanf(assembler_p->asm_code + assembler_p->next_str_idx + len_of_command + 1,
-    "%[^] +\r]%*[^-0-9]%[^] \r]", first_arg_str, second_arg_str);
+                                          "%[^] +\r]%*[^-0-9]%[^] \r]", first_arg_str, second_arg_str);
 
     printf(", with %d arguments: <%s>, <%s>\n\n", num_of_correct_arguments, first_arg_str, second_arg_str);
 
@@ -371,7 +371,7 @@ return_codes processRegister(assembler_t* assembler_p, const char* const name_of
     assert(assembler_p);
     assert(name_of_reg);
     assert(reg_code_p);
-
+//TODO список, без if-else
     if(      strcmp(name_of_reg, "AX") == 0){
 
         *reg_code_p = AX;

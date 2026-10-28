@@ -37,10 +37,10 @@ const size_t VRAM_SIZE          = CANVAS_WIDTH * CANVAS_HEIGHT;
 
 struct processor_t{
 
-    stack_t*       computing_stack;
-    stack_t*       returns_stack;
-    unsigned char* byte_code;
-    size_t         i_p;
+    stack_t*       computing_stack ;
+    stack_t*       returns_stack   ;
+    unsigned char* byte_code       ;
+    size_t         i_p             ;
     size_t         len_of_byte_code;
 
     elem_type      r_a;

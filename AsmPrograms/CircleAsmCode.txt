@@ -113,6 +113,8 @@ RET
     SUB
 
     MUL
+    PUSH 2
+    MUL
 
     PUSH BX
     PUSH 125
