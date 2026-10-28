@@ -8,15 +8,15 @@
 g++ .\Source\Assembler.cpp -o Assembler.exe
 ```
 ```text
-g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32 -lgdi32 -lwinmm -o Processor.exe
+g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32 -lgdi32 -lwinmm -o Processor
 ```
 Напишите программу на ассемблере в текстовом файле, поместите ее в папку AsmPrograms или воспользуйтесь одним из примеров, который там уже есть. Проассемблируйте код, чтобы его мог выполнять процессор:
 ```text
-.\Assembler.exe -f AsmPrograms\YourAsmCodeFileName.txt -t ByteCodePrograms\YourByteCodeFileName.bin
+.\Assembler -f AsmPrograms\YourAsmCodeFileName.txt -t ByteCodePrograms\YourByteCodeFileName.bin
 ```
 Теперь программа готова для выполнения процессором, можно ее запустить:
 ```text
-.\Processor.exe -f ByteCodePrograms\YourByteCodeFileName.bin
+.\Processor -f ByteCodePrograms\YourByteCodeFileName.bin
 ```
 # Архитектура процессора
 
