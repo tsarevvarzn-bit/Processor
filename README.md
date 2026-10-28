@@ -8,14 +8,14 @@
 g++ .\Source\Assembler.cpp -o Assembler.exe
 ```
 ```text
-g++ .\Source\Processor.cpp ^                                                     
-     -I".\Raylib" ^
-     -L".\Raylib" ^
-     -lraylib ^
-     -lglfw3 ^
-     -lopengl32 ^
-     -lgdi32 ^
-     -lwinmm ^
+g++ .\Source\Processor.cpp
+     -I".\Raylib"
+     -L".\Raylib" 
+     -lraylib 
+     -lglfw3 
+     -lopengl32 
+     -lgdi32 
+     -lwinmm 
      -o Processor.exe
 ```
 Напишите программу на ассемблере в текстовом файле, поместите ее в папку AsmPrograms или воспользуйтесь одним из примеров, который там уже есть. Проассемблируйте код, чтобы его мог выполнять процессор:
