@@ -1,0 +1,134 @@
+
+//AX - x, BX - y, CX - координата x
+
+PUSH 0
+POP AX
+PUSH 0
+POP BX
+
+PUSH 10
+POP CX
+
+
+
+:main_cycle
+
+    CALL :draw_circle
+//    DELAY 2
+
+    PUSH CX
+    PUSH 5
+    ADD
+    POP CX
+
+    PUSH CX
+    OUT
+
+    PUSH CX
+    PUSH 200
+
+    JB :main_cycle
+
+DELAY 5
+HLT
+
+
+
+:draw_circle
+
+    PUSH 0
+    POP AX
+    PUSH 0
+    POP BX
+
+    :y_cycle
+
+        PUSH BX
+        PUSH 249
+        JA :y_end
+
+        PUSH 0
+        POP AX
+
+        :x_cycle
+
+            PUSH AX
+            PUSH 249
+            JA :x_end
+
+            CALL :draw_point
+
+            PUSH AX
+            PUSH 1
+            ADD
+            POP AX
+
+//            PUSH BX
+//            OUT
+//            PUSH AX
+//            OUT
+
+            JUMP :x_cycle
+
+        :x_end
+
+        PUSH BX
+        PUSH 1
+        ADD
+        POP BX
+
+        JUMP :y_cycle
+
+    :y_end
+    DRAW
+
+RET
+
+:draw_point
+
+    PUSH BX
+    PUSH 250
+    MUL
+    PUSH AX
+    ADD
+    POP DX
+
+    PUSH AX
+    PUSH CX
+    SUB
+
+    PUSH AX
+    PUSH CX
+    SUB
+
+    MUL
+
+    PUSH BX
+    PUSH 50
+    SUB
+
+    PUSH BX
+    PUSH 50
+    SUB
+
+    MUL
+
+    ADD
+
+    PUSH 50
+    JA :miss_point
+
+        PUSH 67
+        POP [DX]
+        RET
+
+    :miss_point
+
+        PUSH 0
+        POP [DX]
+        RET
+
+
+//    DELAY 0.01
+//    DRAW
+    RET

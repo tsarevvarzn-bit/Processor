@@ -1,7 +1,7 @@
 :beginning
 PUSH 1
 POP AX
-//Проанализировали единичкой
+//Проинициализировали единичкой
 
 :cycle_beginning
     PUSH AX
@@ -59,9 +59,10 @@ HLT
 
 
 :PASHALKO
-PUSH 1258.24
-PUSH 24
-DIV
-OUT
-JUMP :end
+
+    PUSH 1258.24
+    PUSH 24
+    DIV
+    OUT
+    JUMP :end
 

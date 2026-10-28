@@ -129,7 +129,7 @@ return_codes processNextCommand(assembler_t* assembler_p){
         printf("From str: %llu, asm code idx: %llu detected command: <%s>\n",
                assembler_p->num_of_command, assembler_p->next_str_idx, command);
 
-        for(size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++){//TODO bin search
+        for(size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++){
 
             if(strncmp(commands[i].name, command, MAX_COMMAND_LEN) == 0){
 
@@ -151,6 +151,7 @@ return_codes processNextCommand(assembler_t* assembler_p){
         }
 
         printf("isStrProcessed: %d, command: <%s>\n", isStrProcessed, command);
+
         if(!isStrProcessed && !isNotCommandStrCorrect(assembler_p, command)){
 
             printf(RED "Syntax error on %llu str\n" DEFAULT, assembler_p->num_of_command);
@@ -220,7 +221,7 @@ return_codes processPush(assembler_t* assembler_p){
         }
     }
 
-    printf("Arg num imm: %lg, arg reg code: %c, summary command: %X",
+    printf("Arg num imm: %lg, arg reg code: %c, summary command: %X\n",
     pushConfig.arg_number_imm, pushConfig.arg_reg_code, pushConfig.command);
 
     return CONTINUE;
@@ -616,14 +617,3 @@ return_codes processCMDArguments(const int argc, char* const * argv, char** cons
 
     return CONTINUE;
 }
-/*
-. . . . . . # . .
-. . . # # # # # #
-. . # # . . . . .
-
-4161.1346
-1346.4134
-
-* * # * #
-# # # # #
-*/

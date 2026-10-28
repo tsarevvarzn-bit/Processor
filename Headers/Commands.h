@@ -4,8 +4,8 @@
 enum commands_codes{//Пять правый битов
 
     ZERO  = 0x00,
-    PUSH  = 0x01,//Потом добавим пушить из оперативки
-    POP   = 0x02,//Потом добавим попить в оперативку
+    PUSH  = 0x01,
+    POP   = 0x02,
     JUMP  = 0x03,
     CALL  = 0x04,
     RET   = 0x05,
@@ -20,6 +20,7 @@ enum commands_codes{//Пять правый битов
     MUL   = 0x0D,
     DIV   = 0x0E,
     SQRT  = 0x0F,
+    RND   = 0x10,
 };
 
 enum jump_arguments{//Три левых бита
@@ -30,7 +31,7 @@ enum jump_arguments{//Три левых бита
     JUMP_ARG_B   = 0b0110'0000,
     JUMP_ARG_BE  = 0b1000'0000,
     JUMP_ARG_E   = 0b1010'0000,
-    JUMP_ARG_NE  = 0b1100'0000,//Декодировка времени
+    JUMP_ARG_NE  = 0b1100'0000,
 };
 
 enum push_arguments{

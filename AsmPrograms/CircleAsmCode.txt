@@ -1,110 +1,129 @@
-
-//AX - x, BX - y
+//AX - x, BX - y, CX - координата x
 
 PUSH 0
 POP AX
 PUSH 0
 POP BX
 
-:y_cycle
-
-    PUSH BX
-    PUSH 19
-    JA :y_end
-
-    PUSH 0
-    POP AX
-
-    :x_cycle
-
-        PUSH AX
-        PUSH 19
-        JA :x_end
-
-        CALL :draw_point
-
-        PUSH AX
-        PUSH 1
-        ADD
-        POP AX
-
-            PUSH BX
-            OUT
-            PUSH AX
-            OUT
-
-        JUMP :x_cycle
-
-    :x_end
-
-    PUSH BX
-    PUSH 1
-    ADD
-    POP BX
-
-    JUMP :y_cycle
-
-:y_end
-
-DELAY 1
-PUSH 1
-OUT
-
-DELAY 1
-PUSH 1
-OUT
-
-DELAY 1
-PUSH 1
-OUT
-
-DRAW
+CALL :draw_circle
 DELAY 5
 HLT
 
-:draw_point
+:draw_circle
 
-    PUSH AX
-    PUSH 10
-    SUB
-
-    PUSH AX
-    PUSH 10
-    SUB
-
-    MUL
-
-    PUSH BX
-    PUSH 10
-    SUB
-
-    PUSH BX
-    PUSH 10
-    SUB
-
-    MUL
-
-        //PUSH 228
-        //OUT
-
-    ADD
-        POP DX
-        PUSH DX
-        OUT
-        PUSH DX
-
-    PUSH 36
-    JA :miss_point
+    :y_cycle
 
         PUSH BX
-        PUSH 20
-        MUL
-        PUSH AX
+        PUSH 249
+        JA :y_end
+
+        PUSH 0
+        POP AX
+
+        :x_cycle
+
+            PUSH AX
+            PUSH 249
+            JA :x_end
+
+            CALL :draw_point
+
+            PUSH AX
+            PUSH 1
+            ADD
+            POP AX
+
+            JUMP :x_cycle
+
+        :x_end
+
+        PUSH BX
+        PUSH 1
         ADD
-        POP CX
+        POP BX
 
-        PUSH 67.52
-        POP [CX]
+        JUMP :y_cycle
 
-    :miss_point
-    RET
+    :y_end
+    DRAW
+
+RET
+
+:draw_point
+
+    CALL :get_pixel_number
+
+    CALL :get_point_distance_square
+
+    PUSH 5000
+//  Квадрат радиуса
+
+    SUB
+//  Теперь считаем отклонение квадратов
+
+    POP CX
+    PUSH CX
+    PUSH CX
+    MUL
+    SQRT
+    SQRT
+//  Посчитали модуль отклонения
+
+    POP CX
+    PUSH CX
+    PUSH CX
+//  Размножили
+
+    PUSH 15
+//  Половина толщины бублика
+
+    JA :missed_point
+
+        PUSH 10
+        MUL
+        POP [DX]
+        RET
+
+    :missed_point
+
+//      Сбрасываем копию отклонения
+        POP [DX]
+        PUSH 200
+        POP [DX]
+        RET
+
+:get_pixel_number
+
+    PUSH BX
+    PUSH 250
+    MUL
+    PUSH AX
+    ADD
+    POP DX
+RET
+
+:get_point_distance_square
+
+    PUSH AX
+    PUSH 125
+    SUB
+
+    PUSH AX
+    PUSH 125
+    SUB
+
+    MUL
+
+    PUSH BX
+    PUSH 125
+    SUB
+
+    PUSH BX
+    PUSH 125
+    SUB
+
+    MUL
+
+    ADD
+
+RET

@@ -27,14 +27,13 @@
 const size_t DEFAULT_STACK_SIZE = 8     ;
 const int    MAX_FILE_NAME      = 100   ;
 const double EPSILON            = 0.0001;
-const size_t RAM_SIZE           = 50    ;
-const size_t CANVAS_WIDTH       = 20    ;
-const size_t CANVAS_HEIGHT      = 20    ;
-const int    PIXEL_SIZE         = 50    ;
+const int    RAM_SIZE           = 50    ;
+const int    CANVAS_WIDTH       = 250   ;
+const int    CANVAS_HEIGHT      = 250   ;
+const int    PIXEL_SIZE         = 4     ;
 
 const size_t VRAM_SIZE          = CANVAS_WIDTH * CANVAS_HEIGHT;
 
-//TODO кружочек на raylib
 
 struct processor_t{
 
@@ -88,6 +87,7 @@ return_codes sub  (processor_t* processor_p);
 return_codes mul  (processor_t* processor_p);
 return_codes div  (processor_t* processor_p);
 return_codes sqrt (processor_t* processor_p);
+return_codes rnd  (processor_t* processor_p);
 
 
 return_codes popRAM(processor_t* processor_p, elem_type elem, unsigned char argument);
@@ -112,7 +112,8 @@ const function_t COMMANDS_FUNCTIONS[] = {
     sub  ,
     mul  ,
     div  ,
-    sqrt
+    sqrt ,
+    rnd
 };
 
 #ifdef COMMANDS_DUMP
@@ -132,6 +133,16 @@ const function_t COMMANDS_FUNCTIONS[] = {
 #else
 
     #define ON_PROC_STRUCT_DUMP(...)
+
+#endif
+
+#ifdef CONSOLE_DRAW
+
+    #define ON_CONSOLE_DRAW(...) __VA_ARGS__
+
+#else
+
+    #define ON_CONSOLE_DRAW(...)
 
 #endif
 

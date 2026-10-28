@@ -1,0 +1,196 @@
+//AX - x, BX - y, CX - скорость по x, DX - скорость по y
+
+PUSH 125
+POP AX
+PUSH 125
+POP BX
+PUSH 0.1
+POP CX
+PUSH 0.5
+POP DX
+
+//Размер холста в пикселях
+PUSH 250
+POP [62500]
+
+//Размер иконки в пикселях
+PUSH 10
+POP [62501]
+
+:main_cycle
+
+    CALL :recalculate_x_y
+
+    CALL :check_and_calc_hit
+
+    CALL :draw_DVD
+
+    DRAW
+
+    PUSH AX
+    OUT
+
+    PUSH BX
+    OUT
+
+    PUSH CX
+    OUT
+
+    PUSH DX
+    OUT
+
+
+JUMP :main_cycle
+
+:recalculate_x_y
+
+    PUSH AX
+    PUSH CX
+    ADD
+    POP AX
+
+    PUSH BX
+    PUSH DX
+    ADD
+    POP BX
+
+RET
+
+:check_and_calc_hit
+
+//  Проверяем по оси X
+
+    PUSH AX
+    PUSH 1
+    JAE :endif1
+
+        PUSH CX
+        PUSH -1
+        MUL
+        POP CX
+
+    :endif1
+
+    PUSH AX
+    PUSH [62500]
+    PUSH 1
+    SUB
+    PUSH [62501]
+    SUB
+    JBE :endif2
+
+        PUSH CX
+        PUSH -1
+        MUL
+        POP CX
+
+    :endif2
+
+//  Теперь по оси Y
+
+    PUSH BX
+    PUSH 1
+    JAE :endif3
+
+        PUSH DX
+        PUSH -1
+        MUL
+        POP DX
+
+    :endif3
+
+    PUSH BX
+    PUSH [62500]
+    PUSH 1
+    SUB
+    PUSH [62501]
+    SUB
+    JBE :endif4
+
+        PUSH DX
+        PUSH -1
+        MUL
+        POP DX
+
+    :endif4
+
+RET
+
+
+
+:draw_DVD
+
+//  Относительная координата X рисуемого пикселя
+    PUSH 0
+    POP [62502]
+
+//  Относительная координата Y рисуемого пикселя
+    PUSH 0
+    POP [62503]
+
+    :cycle_Y
+
+        PUSH [62503]
+        PUSH [62501]
+        JAE :end2
+
+        PUSH 0
+        POP [62502]
+        :cycle_X
+
+            PUSH [62502]
+            PUSH [62501]
+            JAE :end1
+//МДААА сохраняем DX
+            PUSH CX
+
+            PUSH 200
+            CALL :draw_point
+
+            PUSH [62502]
+            PUSH 1
+            ADD
+            POP [62502]
+
+            JUMP :cycle_X
+
+        :end1
+
+        PUSH [62503]
+        PUSH 1
+        ADD
+        POP [62503]
+
+        JUMP :cycle_Y
+
+    :end2
+
+RET
+
+:draw_point
+
+    PUSH [62500]
+
+    PUSH BX
+    RND
+    PUSH [62503]
+    ADD
+
+    SUB
+
+    PUSH [62500]
+    MUL
+
+    PUSH AX
+    RND
+    PUSH [62502]
+    ADD
+    ADD
+
+    POP CX
+    POP [CX]
+    POP CX
+
+RET
+
+

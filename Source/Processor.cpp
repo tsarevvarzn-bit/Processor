@@ -64,16 +64,16 @@ void startProcessor(processor_t* processor_p, const int argc, char* const* argv)
         processor_p->RAM[i] = 0;
     }
 
-    ON_COMMANDS_DUMP(printf("Len of byte code: %llu", processor_p->len_of_byte_code);)
+    printf("Len of byte code: %llu\n", processor_p->len_of_byte_code);
 
-    InitWindow(CANVAS_WIDTH * PIXEL_SIZE, CANVAS_HEIGHT * PIXEL_SIZE, "My Processor");
+    InitWindow(CANVAS_WIDTH * PIXEL_SIZE, CANVAS_HEIGHT * PIXEL_SIZE, "VRAM");
 
     close(descr);
     putchar('\n');
 }
 
 
-return_codes push(processor_t* processor_p){//Доверяем пользователю, все делаем на даблах. При необходимости обращения к ячейке памяти по значению регистра или константы просто отбрасываем дробную часть
+return_codes push(processor_t* processor_p){
 
     assert(processor_p);
 
@@ -369,6 +369,8 @@ return_codes draw(processor_t* processor_p){
 
     assert(processor_p);
 
+    ON_CONSOLE_DRAW(
+
     putchar('\n');
 
     for(size_t y = 0; y < CANVAS_HEIGHT; y++){
@@ -377,53 +379,31 @@ return_codes draw(processor_t* processor_p){
 
         for(size_t x = 0; x < CANVAS_WIDTH; x++){
 
-            printf("[" YELLOW "%-5lg" DEFAULT "]", processor_p->RAM[y * CANVAS_WIDTH + x]);
+            printf("[" YELLOW "%-2lg" DEFAULT "]", processor_p->RAM[y * CANVAS_WIDTH + x]);
         }
 
         putchar('\n');
     }
 
-    double color = 0;
+    )
+
+    unsigned char color = 0;
 
     BeginDrawing();
 
     ClearBackground(WHITE);
 
-    for(size_t y = 0; y < CANVAS_HEIGHT; y++){
+    for(int y = 0; y < CANVAS_HEIGHT; y++){
 
-        for(size_t x = 0; x < CANVAS_WIDTH; x++){
+        for(int x = 0; x < CANVAS_WIDTH; x++){
 
-
-
-            color = processor_p->RAM[y * CANVAS_WIDTH + x];
+            color = (unsigned char) processor_p->RAM[y * CANVAS_WIDTH + x];
 
             DrawRectangle(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE, {color, color, color, 255});
-
-
         }
-
     }
 
     EndDrawing();
-
-//     while (!WindowShouldClose()) {
-//         BeginDrawing();
-//
-//         ClearBackground(BLACK);
-//
-//         for (size_t y = 0; y < CANVAS_HEIGHT; y++) {
-//             for (size_t x = 0; x < CANVAS_WIDTH; x++) {
-//                 double color = processor_p->RAM[y * CANVAS_WIDTH + x];
-//
-//                 DrawRectangle(x, y, 1, 1,
-//                     {(unsigned char)color,
-//                     (unsigned char)color,
-//                     (unsigned char)color, 255});
-//             }
-//         }
-//
-//         EndDrawing();
-//     }
 
     return CONTINUE;
 }
@@ -490,6 +470,25 @@ return_codes sqrt(processor_t* processor_p){
     }
 
     stackPush(processor_p->computing_stack, pow(a, 0.5));
+
+    return CONTINUE;
+}
+
+return_codes rnd(processor_t* processor_p){
+
+    assert(processor_p);
+
+    elem_type a = NAN;
+
+    stackPop(processor_p->computing_stack, &a);
+
+    if(IS_POISON(a)){
+
+        return END;
+    }
+
+
+    stackPush(processor_p->computing_stack, trunc(a));
 
     return CONTINUE;
 }

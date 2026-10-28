@@ -16,7 +16,7 @@
 
 const int    MAX_COMMAND_LEN    = 100;
 const int    MAX_MARK_NAME_LEN  = 100;
-const int    NUM_OF_MARKS       =  10;
+const int    NUM_OF_MARKS       =  50;
 const size_t DEFAULT_MARK_VALUE =   0;
 
 enum return_codes{
@@ -99,7 +99,7 @@ return_codes processRegister(assembler_t* assembler_p, const char* const name_of
 return_codes parsePushPopArgument        (pushPopConfig_t* pushConfig_p,    assembler_t* assembler_p, const int len_of_command);
 return_codes parsePushPopWithOneArgument (pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
 return_codes parsePushPopWithTwoArguments(pushPopConfig_t* pushPopConfig_p, assembler_t* assembler_p, const char* const first_arg_str, const char* const second_arg_str);
-//TODO градация серого в рейлибе на примере кружочка, 255 оттенков
+
 
 const command_t commands[]{
 
@@ -127,6 +127,7 @@ const command_t commands[]{
     {.name = "MUL"  , .code = MUL , .function = NULL        },
     {.name = "DIV"  , .code = DIV , .function = NULL        },
     {.name = "SQRT" , .code = SQRT, .function = NULL        },
+    {.name = "RND"  , .code = RND,  .function = NULL        },
 };
 
 #endif
