@@ -5,7 +5,7 @@
 # Как пользоваться
 Скачайте репозиторий и разархивируйте его, перейдите в корневую папку Processor и скомпилируйте ассемблер и процессор:
 ```text
-g++ .\Source\Assembler.cpp -o Assembler.exe
+g++ .\Source\Assembler.cpp -o Assembler
 ```
 ```text
 g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32 -lgdi32 -lwinmm -o Processor
