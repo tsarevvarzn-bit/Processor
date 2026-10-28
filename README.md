@@ -21,7 +21,7 @@ g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32
 # Архитектура процессора
 
 <div align="center">
-<img width="442" height="367" alt="image" src="https://github.com/user-attachments/assets/8afc1f10-4470-4b43-a4e1-d94dfe3f6508" />
+<img style="width:70%; height:auto; alt="image" src="https://github.com/user-attachments/assets/8afc1f10-4470-4b43-a4e1-d94dfe3f6508" />
 </div>
  
 - **Вычислительный стек** все вычисления процессора основаны на вычислительном стеке (структура данных, основанная на приницпе LIFO), импортирующемся в проект как билиотека, подробнее о нем можно узнать в моем репозитории Stack на гитхабе, я использую именно его. Каждый элемент стека - число double, для работы со стеком используются 2 базовые команды: PUSH - положить число в конец стека и POP - безвозвратно удалить последнее запушеннное в стек число, получив его значение
