@@ -21,7 +21,7 @@ g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32
 # Архитектура процессора
 
 <div align="center">
-<img style="width:70%; height:auto; alt="image" src="https://github.com/user-attachments/assets/8afc1f10-4470-4b43-a4e1-d94dfe3f6508" />
+<img style="width:50%; height:auto; alt="image" src="https://github.com/user-attachments/assets/8afc1f10-4470-4b43-a4e1-d94dfe3f6508" />
 </div>
  
 - **Вычислительный стек** все вычисления процессора основаны на вычислительном стеке (структура данных, основанная на приницпе LIFO), импортирующемся в проект как билиотека, подробнее о нем можно узнать в моем репозитории Stack на гитхабе, я использую именно его. Каждый элемент стека - число double, для работы со стеком используются 2 базовые команды: PUSH - положить число в конец стека и POP - безвозвратно удалить последнее запушеннное в стек число, получив его значение
@@ -33,7 +33,7 @@ g++ .\Source\Processor.cpp -I".\Raylib" -L".\Raylib" -lraylib -lglfw3 -lopengl32
 # Синтаксис ассемблера
 
 <div align="center">
-<img width="434" height="756" alt="image" src="https://github.com/user-attachments/assets/6e1609ef-cc42-4d2d-970d-0ea631502f61" />
+<img style="width:30%; height:auto; alt="image" src="https://github.com/user-attachments/assets/6e1609ef-cc42-4d2d-970d-0ea631502f61" />
 </div>
 
 - **Комментарии** чтобы ассемблер проигнорировал символы данной строки, напишите в ее начале два обратных слэша: //
@@ -113,20 +113,20 @@ Processor/
 - **Гибкий дебаг процессора** вывод данных о работе процессора гибко настраивается несколькими флагами компиляции: COMMANDS_DUMP, PROC_STRUCT_DUMP и CONSOLE_DRAW, каждый можно включать/отключать независимо
 - **Метки и двухпроходное ассемблирование** благодаря двухпроходному ассемблированию в ассемблерном коде можно задавать метки любыми именами `:mark_name` и пользоваться ими при вызове функций и джампов `JUMP :mark_name`
 ## Полнота
-Процессор и ассемблер в связке дают возможность написать огромный спектр различных программ и алгоритмов и запустить их. Ассемблерный язык позволяет реализовать любой возможный вычислительный алгоритм (Тьюринг полный), используя при этом понятные и простые конструкции. Пример некоторых удобных, рекомендованных кострукций:
+Процессор и ассемблер в связке дают возможность написать огромный спектр различных программ и алгоритмов и запустить их. Ассемблерный язык позволяет реализовать любой возможный вычислительный алгоритм (Тьюринг-полный), используя при этом понятные и простые конструкции. Пример некоторых удобных, рекомендованных конструкций:
 - **Условный оператор или if-else**
 <div align="center">
-<img width="326" height="457" alt="image" src="https://github.com/user-attachments/assets/e874f759-5cc1-4c74-a2eb-7014bd21fde5" />
+<img style="width:30%; height:auto; alt="image" src="https://github.com/user-attachments/assets/e874f759-5cc1-4c74-a2eb-7014bd21fde5" />
 </div>
 
 - **Вызов функций, в том числе и рекурсивный**
 <div align="center">
-<img width="330" height="913" alt="image" src="https://github.com/user-attachments/assets/0eaf1a1a-d778-481e-997e-e6b13ddfad04" />
+<img style="width:30%; height:auto; alt="image" src="https://github.com/user-attachments/assets/0eaf1a1a-d778-481e-997e-e6b13ddfad04" />
 </div>
 
 - **Циклы, вложенные циклы**
 <div align="center">
-<img width="329" height="928" alt="image" src="https://github.com/user-attachments/assets/90b3594e-8623-463b-9b3b-64402055a937" />
+<img style="width:30%; height:auto;" alt="image" src="https://github.com/user-attachments/assets/90b3594e-8623-463b-9b3b-64402055a937" />
 </div>
 
 ## Красивый ввод-вывод
